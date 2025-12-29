@@ -1,100 +1,96 @@
-// Ear Training App - Main JavaScript
+// Ear Training App - Main Application Logic
 
 // ===== CONFIGURATION =====
-const NOTATION_SYSTEMS = {
-    western: ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Ti'],
-    hindustani: ['Sa', 'Re', 'Ga', 'Ma', 'Pa', 'Dha', 'Ni'],
-    carnatic: ['Sa', 'Ri', 'Ga', 'Ma', 'Pa', 'Da', 'Ni']
-};
+const BASE_FREQUENCY = 261.63; // Middle C (C4)
 
-// Base frequency for middle C (C4)
-const BASE_FREQUENCY = 261.63;
-
-// Major scale frequency ratios
-const SCALE_RATIOS = [
-    1.0,      // Do/Sa (1)
-    9/8,      // Re/Re/Ri (2)
-    5/4,      // Mi/Ga (3)
-    4/3,      // Fa/Ma (4)
-    3/2,      // Sol/Pa (5)
-    5/3,      // La/Dha/Da (6)
-    15/8      // Ti/Ni (7)
-];
-
-// Pattern templates for different difficulties
-// Difficulty is based on:
-// 1. Number of notes (more notes = harder)
-// 2. Interval sizes (larger jumps = harder)
-// 3. Pattern complexity (direction changes, non-stepwise motion)
-
+// Pattern templates for pedagogical mode
 const PATTERN_TEMPLATES = {
-    // EASY: Stepwise motion (seconds), 3-5 notes, mostly conjunct
-    // Traditional beginner ear training exercises
     easy: [
-        [1, 2, 3],           // Simple ascending stepwise
-        [1, 2, 3, 2, 1],     // Classic up and down pattern
-        [3, 2, 1],           // Simple descending
-        [1, 2, 1],           // Neighbor tone
-        [1, 3, 1],           // Skip up third, return
-        [1, 2, 3, 4],        // Four-note stepwise
-        [5, 4, 3, 2, 1],     // Descending scale segment
-        [1, 2, 3, 4, 3, 2, 1] // Stepwise arch
+        [1, 2, 3],
+        [1, 2, 3, 2, 1],
+        [3, 2, 1],
+        [1, 2, 1],
+        [1, 3, 1],
+        [1, 2, 3, 4],
+        [5, 4, 3, 2, 1],
+        [1, 2, 3, 4, 3, 2, 1]
     ],
-
-    // MEDIUM: Mix of steps and small skips (thirds), 5-7 notes
-    // Introduces interval training with thirds and fourths
     medium: [
-        [1, 3, 5, 3, 1],     // Triad arpeggio (thirds)
-        [1, 2, 3, 4, 5],     // Five-note scale
-        [1, 3, 2, 4, 3],     // Alternating steps/skips
-        [1, 4, 3, 2, 1],     // Fourth jump, stepwise return
-        [5, 3, 1],           // Descending thirds
-        [1, 2, 4, 3, 5],     // Mixed intervals
-        [1, 5, 4, 3, 2, 1],  // Fifth jump, stepwise descent
-        [1, 2, 3, 5, 4, 3, 2, 1] // Scale with skip
+        [1, 3, 5, 3, 1],
+        [1, 2, 3, 4, 5],
+        [1, 3, 2, 4, 3],
+        [1, 4, 3, 2, 1],
+        [5, 3, 1],
+        [1, 2, 4, 3, 5],
+        [1, 5, 4, 3, 2, 1],
+        [1, 2, 3, 5, 4, 3, 2, 1]
     ],
-
-    // HARD: Large intervals (fourths, fifths, sixths), 7-10 notes, complex patterns
-    // Advanced ear training with challenging leaps and direction changes
     hard: [
-        [1, 5, 1],           // Perfect fifth leap (challenging interval)
-        [1, 6, 1],           // Sixth leap (very challenging)
-        [1, 3, 5, 7],        // Seventh chord outline
-        [1, 4, 7, 5, 3, 1],  // Large skips with direction changes
-        [1, 5, 2, 6, 3, 7],  // Wide intervals, chromatic tendency
-        [1, 6, 4, 2, 7, 5, 3, 1], // Complex interval pattern
-        [1, 3, 5, 7, 5, 3, 1],    // Seventh chord arpeggio
-        [1, 4, 2, 5, 3, 6, 4, 7], // Mixed large intervals
-        [5, 1, 3, 7, 2, 6, 4, 1]  // Complex melodic pattern
+        [1, 5, 1],
+        [1, 6, 1],
+        [1, 3, 5, 7],
+        [1, 4, 7, 5, 3, 1],
+        [1, 5, 2, 6, 3, 7],
+        [1, 6, 4, 2, 7, 5, 3, 1],
+        [1, 3, 5, 7, 5, 3, 1],
+        [1, 4, 2, 5, 3, 6, 4, 7],
+        [5, 1, 3, 7, 2, 6, 4, 1]
     ]
 };
 
 // ===== STATE =====
 let audioContext = null;
 let currentPattern = [];
+let currentScale = 'major';
 let currentDifficulty = 'medium';
-let currentNotation = 'western';
+let currentPatternMode = 'pedagogical';
+let syllableSystem = 'western';
+let showNumbers = true;
+let showSyllables = true;
+let practiceMode = 'listen'; // 'listen', 'visual', 'test'
 let playbackSpeed = 1.0;
-let showSolfege = true;
 let isPlaying = false;
-let isPaused = false;
 let currentNoteIndex = 0;
 let playbackTimeout = null;
 
 // ===== DOM ELEMENTS =====
 const elements = {
+    // Pattern settings
+    patternMode: document.getElementById('pattern-mode'),
+    customPatternContainer: document.getElementById('custom-pattern-container'),
+    customPatternInput: document.getElementById('custom-pattern-input'),
+    useCustomPatternBtn: document.getElementById('use-custom-pattern-btn'),
+    customPatternError: document.getElementById('custom-pattern-error'),
+    scale: document.getElementById('scale'),
     difficulty: document.getElementById('difficulty'),
-    notation: document.getElementById('notation'),
-    speed: document.getElementById('speed'),
-    speedValue: document.getElementById('speed-value'),
-    showSolfege: document.getElementById('show-solfege'),
+    generateBtn: document.getElementById('generate-btn'),
+
+    // Display settings
+    showNumbers: document.getElementById('show-numbers'),
+    showSyllables: document.getElementById('show-syllables'),
+    syllableSystem: document.getElementById('syllable-system'),
+
+    // Pattern display
     patternDisplay: document.getElementById('pattern-display'),
+    scaleInfo: document.getElementById('scale-info'),
     scaleVisual: document.getElementById('scale-visual'),
     currentNote: document.getElementById('current-note'),
-    generateBtn: document.getElementById('generate-btn'),
+
+    // Playback controls
+    practiceModeRadios: document.querySelectorAll('input[name="practice-mode"]'),
     playBtn: document.getElementById('play-btn'),
     pauseBtn: document.getElementById('pause-btn'),
-    repeatBtn: document.getElementById('repeat-btn')
+    restartBtn: document.getElementById('restart-btn'),
+    stepForwardBtn: document.getElementById('step-forward-btn'),
+    replayLastBtn: document.getElementById('replay-last-btn'),
+
+    // Advanced controls
+    speed: document.getElementById('speed'),
+    speedValue: document.getElementById('speed-value'),
+    loopCount: document.getElementById('loop-count'),
+    noteGap: document.getElementById('note-gap'),
+    noteGapValue: document.getElementById('note-gap-value'),
+    manualMode: document.getElementById('manual-mode')
 };
 
 // ===== INITIALIZATION =====
@@ -103,76 +99,101 @@ function init() {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
     // Set up event listeners
-    elements.difficulty.addEventListener('change', (e) => {
-        currentDifficulty = e.target.value;
+    setupEventListeners();
+
+    // Initialize scale visual
+    createScaleVisual();
+
+    console.log('Ear Training App initialized');
+}
+
+function setupEventListeners() {
+    // Pattern settings
+    elements.patternMode.addEventListener('change', handlePatternModeChange);
+    elements.scale.addEventListener('change', handleScaleChange);
+    elements.difficulty.addEventListener('change', handleDifficultyChange);
+    elements.generateBtn.addEventListener('click', generateNewPattern);
+
+    // Display settings
+    elements.showNumbers.addEventListener('change', handleDisplayToggle);
+    elements.showSyllables.addEventListener('change', handleDisplayToggle);
+    elements.syllableSystem.addEventListener('change', handleSyllableSystemChange);
+
+    // Practice mode
+    elements.practiceModeRadios.forEach(radio => {
+        radio.addEventListener('change', handlePracticeModeChange);
     });
 
-    elements.notation.addEventListener('change', (e) => {
-        currentNotation = e.target.value;
-        if (currentPattern.length > 0) {
-            updateScaleVisual();
-        }
-    });
+    // Playback controls
+    elements.playBtn.addEventListener('click', playPattern);
+    elements.pauseBtn.addEventListener('click', pausePlayback);
+    elements.restartBtn.addEventListener('click', restartPattern);
 
+    // Advanced controls
     elements.speed.addEventListener('input', (e) => {
         playbackSpeed = parseFloat(e.target.value);
         elements.speedValue.textContent = playbackSpeed.toFixed(1) + 'x';
     });
 
-    elements.showSolfege.addEventListener('change', (e) => {
-        showSolfege = e.target.checked;
+    elements.noteGap.addEventListener('input', (e) => {
+        const gap = parseInt(e.target.value);
+        elements.noteGapValue.textContent = (gap / 1000).toFixed(1) + 's';
     });
-
-    elements.generateBtn.addEventListener('click', generateNewPattern);
-    elements.playBtn.addEventListener('click', playPattern);
-    elements.pauseBtn.addEventListener('click', pausePlayback);
-    elements.repeatBtn.addEventListener('click', repeatPattern);
-
-    // Initialize scale visual
-    createScaleVisual();
 }
 
 // ===== PATTERN GENERATION =====
-function generateNewPattern() {
-    // Get random template from current difficulty
-    const templates = PATTERN_TEMPLATES[currentDifficulty];
-    const template = templates[Math.floor(Math.random() * templates.length)];
+function handlePatternModeChange(e) {
+    currentPatternMode = e.target.value;
 
-    // Sometimes modify the template slightly for variety
-    if (Math.random() > 0.7) {
-        currentPattern = modifyPattern(template);
+    // Show/hide custom pattern input
+    if (currentPatternMode === 'custom') {
+        elements.customPatternContainer.style.display = 'block';
     } else {
-        currentPattern = [...template];
+        elements.customPatternContainer.style.display = 'none';
     }
+}
 
-    // Update display
+function handleScaleChange(e) {
+    currentScale = e.target.value;
+    if (currentPattern.length > 0) {
+        updateScaleVisual();
+        updateScaleInfo();
+    }
+}
+
+function handleDifficultyChange(e) {
+    currentDifficulty = e.target.value;
+}
+
+function generateNewPattern() {
+    if (currentPatternMode === 'pedagogical') {
+        generatePedagogicalPattern();
+    } else if (currentPatternMode === 'random') {
+        generateRandomPattern();
+    }
+    // Custom mode is handled separately
+
     updatePatternDisplay();
     updateScaleVisual();
-
-    // Enable controls
-    elements.playBtn.disabled = false;
-    elements.repeatBtn.disabled = false;
-
-    // Reset playback state
+    updateScaleInfo();
+    enablePlaybackControls();
     resetPlaybackState();
 }
 
-function modifyPattern(template) {
-    const modified = [...template];
+function generatePedagogicalPattern() {
+    const templates = PATTERN_TEMPLATES[currentDifficulty];
+    const template = templates[Math.floor(Math.random() * templates.length)];
+    currentPattern = [...template];
 
-    // Randomly add a note or two
-    if (currentDifficulty !== 'easy' && Math.random() > 0.5) {
-        const insertPos = Math.floor(Math.random() * modified.length);
-        const nearbyNote = modified[insertPos];
-        const newNote = nearbyNote + (Math.random() > 0.5 ? 1 : -1);
+    // Validate pattern doesn't exceed scale length
+    const scaleLength = getScaleLength(currentScale);
+    currentPattern = currentPattern.filter(note => note <= scaleLength);
+}
 
-        // Make sure note is in valid range (1-7)
-        if (newNote >= 1 && newNote <= 7) {
-            modified.splice(insertPos, 0, newNote);
-        }
-    }
-
-    return modified;
+function generateRandomPattern() {
+    // TODO: Implement random pattern generation with interval constraints
+    // For now, fall back to pedagogical
+    generatePedagogicalPattern();
 }
 
 function updatePatternDisplay() {
@@ -180,42 +201,107 @@ function updatePatternDisplay() {
     elements.patternDisplay.innerHTML = `<span class="pattern-text">${patternText}</span>`;
 }
 
+function updateScaleInfo() {
+    const scale = SCALE_LIBRARY[currentScale];
+    let info = scale.name;
+
+    if (scale.time) {
+        info += ` • ${scale.time}`;
+    }
+    if (scale.mood) {
+        info += ` • ${scale.mood}`;
+    }
+
+    elements.scaleInfo.textContent = info;
+}
+
+// ===== DISPLAY SETTINGS =====
+function handleDisplayToggle() {
+    showNumbers = elements.showNumbers.checked;
+    showSyllables = elements.showSyllables.checked;
+
+    // Ensure at least one is checked
+    if (!showNumbers && !showSyllables) {
+        elements.showNumbers.checked = true;
+        showNumbers = true;
+    }
+
+    // Update visual if pattern exists
+    if (currentPattern.length > 0) {
+        updateScaleVisual();
+    }
+}
+
+function handleSyllableSystemChange(e) {
+    syllableSystem = e.target.value;
+    if (currentPattern.length > 0) {
+        updateScaleVisual();
+    }
+}
+
+function handlePracticeModeChange(e) {
+    practiceMode = e.target.value;
+
+    // Disable test mode for now
+    if (practiceMode === 'test') {
+        alert('Test mode coming soon!');
+        // Reset to listen mode
+        document.querySelector('input[value="listen"]').checked = true;
+        practiceMode = 'listen';
+    }
+}
+
 // ===== SCALE VISUAL =====
 function createScaleVisual() {
+    const scaleLength = getScaleLength(currentScale);
+    const scale = SCALE_LIBRARY[currentScale];
+
     elements.scaleVisual.innerHTML = '';
 
-    for (let i = 1; i <= 7; i++) {
+    for (let i = 1; i <= scaleLength; i++) {
         const noteCircle = document.createElement('div');
         noteCircle.className = 'note-circle';
         noteCircle.dataset.note = i;
 
-        const noteNumber = document.createElement('div');
-        noteNumber.className = 'note-number';
-        noteNumber.textContent = i;
-
-        const noteName = document.createElement('div');
-        noteName.className = 'note-name';
-        noteName.textContent = NOTATION_SYSTEMS[currentNotation][i - 1];
-
-        noteCircle.appendChild(noteNumber);
-        noteCircle.appendChild(noteName);
         elements.scaleVisual.appendChild(noteCircle);
     }
+
+    updateScaleVisual();
 }
 
 function updateScaleVisual() {
-    // Reset all circles
-    const circles = elements.scaleVisual.querySelectorAll('.note-circle');
-    circles.forEach(circle => {
-        circle.classList.remove('in-pattern', 'active');
-        const noteName = circle.querySelector('.note-name');
-        noteName.textContent = NOTATION_SYSTEMS[currentNotation][parseInt(circle.dataset.note) - 1];
-    });
+    const scaleLength = getScaleLength(currentScale);
+    const scale = SCALE_LIBRARY[currentScale];
 
-    // Highlight notes in pattern
-    currentPattern.forEach(note => {
-        const circle = elements.scaleVisual.querySelector(`[data-note="${note}"]`);
-        if (circle) {
+    // Recreate if scale length changed
+    const currentCircles = elements.scaleVisual.querySelectorAll('.note-circle').length;
+    if (currentCircles !== scaleLength) {
+        createScaleVisual();
+        return;
+    }
+
+    const circles = elements.scaleVisual.querySelectorAll('.note-circle');
+
+    circles.forEach((circle, idx) => {
+        const noteNum = idx + 1;
+        circle.classList.remove('in-pattern', 'active');
+
+        // Build display content
+        let content = '';
+
+        if (showNumbers) {
+            content += `<div class="note-number">${noteNum}</div>`;
+        }
+
+        if (showSyllables) {
+            const syllable = scale.solfege[syllableSystem][idx];
+            content += `<div class="note-name">${syllable}</div>`;
+        }
+
+        circle.innerHTML = content;
+
+        // Mark notes in pattern
+        if (currentPattern.includes(noteNum)) {
             circle.classList.add('in-pattern');
         }
     });
@@ -233,12 +319,23 @@ function highlightNote(noteIndex) {
         }
 
         // Update current note display
-        if (showSolfege) {
-            const syllable = NOTATION_SYSTEMS[currentNotation][note - 1];
-            elements.currentNote.textContent = syllable;
-        } else {
-            elements.currentNote.textContent = note;
+        const scale = SCALE_LIBRARY[currentScale];
+        let displayText = '';
+
+        if (showNumbers) {
+            displayText += note;
         }
+
+        if (showSyllables) {
+            const syllable = scale.solfege[syllableSystem][note - 1];
+            if (showNumbers) {
+                displayText += ` (${syllable})`;
+            } else {
+                displayText = syllable;
+            }
+        }
+
+        elements.currentNote.textContent = displayText;
     } else {
         elements.currentNote.textContent = '';
     }
@@ -246,28 +343,29 @@ function highlightNote(noteIndex) {
 
 // ===== AUDIO PLAYBACK =====
 function playNote(noteNumber, duration = 0.5) {
+    // Don't play if in visual-only mode
+    if (practiceMode === 'visual') return;
+
     if (!audioContext) return;
+
+    const scale = SCALE_LIBRARY[currentScale];
+    const frequency = BASE_FREQUENCY * scale.ratios[noteNumber - 1];
 
     // Create oscillator
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
-    // Calculate frequency
-    const frequency = BASE_FREQUENCY * SCALE_RATIOS[noteNumber - 1];
-
-    // Set up oscillator
     oscillator.type = 'sine';
     oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
 
-    // Set up envelope (ADSR)
+    // Envelope
     const now = audioContext.currentTime;
     gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05); // Attack
-    gainNode.gain.linearRampToValueAtTime(0.2, now + 0.1); // Decay
-    gainNode.gain.setValueAtTime(0.2, now + duration - 0.1); // Sustain
-    gainNode.gain.linearRampToValueAtTime(0, now + duration); // Release
+    gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05);
+    gainNode.gain.linearRampToValueAtTime(0.2, now + 0.1);
+    gainNode.gain.setValueAtTime(0.2, now + duration - 0.1);
+    gainNode.gain.linearRampToValueAtTime(0, now + duration);
 
-    // Connect and play
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
 
@@ -279,21 +377,18 @@ async function playPattern() {
     if (currentPattern.length === 0) return;
 
     isPlaying = true;
-    isPaused = false;
     currentNoteIndex = 0;
 
     elements.playBtn.disabled = true;
     elements.pauseBtn.disabled = false;
+    elements.restartBtn.disabled = false;
     elements.generateBtn.disabled = true;
 
     await playNextNote();
 }
 
 async function playNextNote() {
-    if (!isPlaying || isPaused) return;
-
-    if (currentNoteIndex >= currentPattern.length) {
-        // Pattern finished
+    if (!isPlaying || currentNoteIndex >= currentPattern.length) {
         finishPlayback();
         return;
     }
@@ -309,16 +404,18 @@ async function playNextNote() {
 
     currentNoteIndex++;
 
-    // Schedule next note
-    const delay = (noteDuration * 1000) / playbackSpeed;
-    playbackTimeout = setTimeout(() => playNextNote(), delay);
+    // Get gap from settings
+    const gap = parseInt(elements.noteGap.value);
+    const totalDelay = (noteDuration * 1000 + gap) / playbackSpeed;
+
+    playbackTimeout = setTimeout(() => playNextNote(), totalDelay);
 }
 
 function pausePlayback() {
-    isPaused = true;
+    isPlaying = false;
     elements.pauseBtn.disabled = true;
     elements.playBtn.disabled = false;
-    elements.playBtn.textContent = '▶ Resume';
+    elements.playBtn.textContent = 'Resume';
 
     if (playbackTimeout) {
         clearTimeout(playbackTimeout);
@@ -326,22 +423,21 @@ function pausePlayback() {
     }
 }
 
-function repeatPattern() {
+function restartPattern() {
     resetPlaybackState();
     playPattern();
 }
 
 function finishPlayback() {
     isPlaying = false;
-    isPaused = false;
     currentNoteIndex = 0;
 
     elements.playBtn.disabled = false;
     elements.pauseBtn.disabled = true;
     elements.generateBtn.disabled = false;
-    elements.playBtn.textContent = '▶ Play';
+    elements.playBtn.textContent = 'Play';
 
-    highlightNote(-1); // Clear highlight
+    highlightNote(-1);
 
     if (playbackTimeout) {
         clearTimeout(playbackTimeout);
@@ -356,13 +452,17 @@ function resetPlaybackState() {
     }
 
     isPlaying = false;
-    isPaused = false;
     currentNoteIndex = 0;
 
-    elements.playBtn.textContent = '▶ Play';
+    elements.playBtn.textContent = 'Play';
     elements.pauseBtn.disabled = true;
 
     highlightNote(-1);
+}
+
+function enablePlaybackControls() {
+    elements.playBtn.disabled = false;
+    elements.restartBtn.disabled = false;
 }
 
 // ===== START APP =====
