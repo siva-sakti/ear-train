@@ -4,7 +4,12 @@ A simple, elegant web application for practicing musical ear training with suppo
 
 ## Features
 
-### Current Features (v1.0)
+### Pattern Generation
+
+- **Three Pattern Modes**
+  - **Pedagogical**: Curated traditional ear training sequences
+  - **Random**: Algorithm-based generation respecting interval difficulty rules
+  - **Custom Input**: Enter your own patterns (e.g., "1 3 5 3 1")
 
 - **Three Difficulty Levels** (based on interval size AND pattern length)
   - **Easy**: 3-5 notes, stepwise motion (seconds), mostly conjunct patterns
@@ -14,33 +19,125 @@ A simple, elegant web application for practicing musical ear training with suppo
   - **Hard**: 7-10 notes, large intervals (fifths/sixths), complex direction changes
     - Examples: 1-5-1 (perfect fifth), 1-6-4-2-7-5-3-1 (wide interval training)
 
-- **Multiple Notation Systems**
-  - Western: Do, Re, Mi, Fa, Sol, La, Ti
-  - Hindustani: Sa, Re, Ga, Ma, Pa, Dha, Ni
-  - Carnatic: Sa, Ri, Ga, Ma, Pa, Da, Ni
+### Scale Library
 
-- **Pedagogically-Sound Pattern Generation**
-  - Based on traditional ear training exercises and interval training
-  - Patterns progress from stepwise motion → small skips → large leaps
-  - Examples: 1-2-3-2-1 (stepwise), 1-3-5 (thirds), 1-5-1 (perfect fifth)
-  - Each pattern is randomly selected from proven ear training sequences
-  - Difficulty considers BOTH pattern length AND interval size (larger jumps = harder)
+- **Western Scales**
+  - Major (Ionian)
+  - Natural Minor (Aeolian)
+  - Harmonic Minor
+  - Melodic Minor
+  - Pentatonic Major
+  - Pentatonic Minor
 
-- **Audio Playback**
-  - High-quality sine wave tones using Web Audio API
+- **Hindustani Ragas** (with pakad phrases)
+  - Bhairav - Morning, serious/spiritual
+  - Yaman (Kalyan) - Evening, sweet/calm
+  - Kafi - Afternoon, devotional
+  - Bilaval - Morning (equivalent to Major)
+  - Bhairavi - Night, melancholic
+  - Todi - Afternoon, complex/intense
+
+- **Carnatic Ragas** (popular melakartas)
+  - Mayamalavagowla (15) - Beginner raga, morning
+  - Shankarabharanam (29) - Versatile, joyful
+  - Kalyani (65) - Joyful, auspicious
+  - Kharaharapriya (22) - Serious, contemplative
+  - Harikambhoji (28) - Bright, devotional
+  - Natabhairavi (20) - Evening, contemplative
+
+### Notation Display
+
+- **Flexible Display Options**
+  - Toggle numbers (1, 2, 3...) on/off
+  - Toggle syllables (Do/Sa, Re, Mi/Ga...) on/off
+  - Both can be shown simultaneously
+  - Three syllable systems: Western, Hindustani, Carnatic
+
+### Enhanced Playback Controls
+
+- **Standard Controls**
+  - Play, Pause, Resume, Restart
   - Adjustable playback speed (0.5x - 2x)
-  - Play, pause, and repeat controls
 
-- **Visual Feedback**
-  - Scale position indicator showing all 7 notes
-  - Highlighted notes that appear in the current pattern
-  - Active note highlighting during playback
-  - Optional solfege syllable display
+- **Advanced Practice Features**
+  - **Replay Last Note**: Hear previous note again
+  - **Step Forward**: Manual note-by-note playback
+  - **Loop Pattern**: Auto-repeat pattern N times
+  - **Adjustable Gap**: Control silence between notes (0-2 seconds)
+  - **Manual Mode**: Click to play each note individually
 
-- **Clean, Modern UI**
-  - Dark theme optimized for extended practice sessions
-  - Responsive design works on mobile and desktop
-  - Elegant animations and transitions
+### Practice Modes
+
+- **Listen Mode**: Computer plays sound (normal practice)
+- **Visual Only**: Pattern highlights but silent, you sing along
+- **Test Mode**: Microphone listens and gives real-time feedback
+
+### Pitch Detection & Test Mode
+
+- **Real-Time Pitch Detection**
+  - Accurate autocorrelation algorithm
+  - Shows target note vs. detected note
+  - Displays cents deviation (±50 = correct)
+  - Visual pitch meter
+  - No octave equivalence (precise pitch required)
+
+- **Test Workflow**
+  - Listen to pattern
+  - Sing it back
+  - Get instant feedback on each note
+  - See accuracy percentage and specific errors
+  - Identify which intervals need work
+
+### Interval Training
+
+- **Interval Name Display**
+  - Shows interval labels (Perfect Fifth, Major Third, etc.)
+  - Educational context during practice
+  - Track which intervals you struggle with
+
+### Practice History & Analytics
+
+- **Session Tracking**
+  - Auto-saves practice sessions
+  - Track duration, scales practiced, accuracy
+  - No manual effort required
+
+- **Calendar View**
+  - Visual calendar grid showing practice days
+  - Color-coded by scale practiced
+  - See which scales worked on which days
+  - Weekly/monthly breakdown
+
+- **Progress Stats (Factual)**
+  - Accuracy trends by interval type
+  - Most/least practiced scales
+  - Weak vs. strong intervals
+  - No gamification, just data
+
+### Guessing Mode
+
+- **Ear Training Games**
+  - Computer plays mystery note or interval
+  - Identify what you heard
+  - Respond by singing or clicking
+  - Immediate feedback
+
+### Mobile Support
+
+- **PWA (Progressive Web App)**
+  - Installable on mobile devices
+  - Works offline after first load
+  - Full-screen app experience
+  - No app store required
+
+### UI Design
+
+- **Minimalist Aesthetic**
+  - Plain text, clean design
+  - Light background, high contrast
+  - Simple border-only buttons
+  - Space for custom doodles/icons
+  - No distracting animations
 
 ## How to Use
 
@@ -105,17 +202,24 @@ By practicing these patterns, you train your brain to recognize the relationship
 - Based on 24 śruti (microtones)
 - Sa and Pa are immovable anchors
 
-## Coming Soon
+## Roadmap
 
-### Test Mode
-- Sing back patterns and receive pitch accuracy feedback
-- Real-time pitch detection using Web Audio API
-- Progress tracking
+### Phase 1 (Complete)
+✅ Basic pattern playback
+✅ Western notation support
 
-### Guessing Mode
-- Identify intervals by ear
-- Test your note recognition skills
-- Gamified learning experience
+### Phase 2 (In Progress)
+- 🔄 Pattern modes (pedagogical/random/custom)
+- 🔄 Full scale library (Western, Hindustani, Carnatic)
+- 🔄 Enhanced playback controls
+- 🔄 Notation display toggles
+
+### Phase 3 (Upcoming)
+- ⏳ Pitch detection & test mode
+- ⏳ Interval name display
+- ⏳ Practice history & calendar
+- ⏳ Guessing mode
+- ⏳ PWA support
 
 ## Technical Details
 
