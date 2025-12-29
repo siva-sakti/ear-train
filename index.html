@@ -9,54 +9,113 @@
 <body>
     <div class="container">
         <header>
-            <h1>🎵 Ear Training Practice</h1>
+            <h1>Ear Training Practice</h1>
             <p class="subtitle">Practice scales and improve your musical ear</p>
         </header>
 
         <main>
-            <!-- Settings Panel -->
-            <section class="settings-panel">
-                <div class="setting-group">
-                    <label for="difficulty">Difficulty:</label>
-                    <select id="difficulty">
-                        <option value="easy">Easy (3-5 notes)</option>
-                        <option value="medium" selected>Medium (5-7 notes)</option>
-                        <option value="hard">Hard (7-10 notes)</option>
+            <!-- Pattern Generation Settings -->
+            <section class="section">
+                <h2>Pattern Settings</h2>
+
+                <div class="setting-row">
+                    <label for="pattern-mode">Pattern Source:</label>
+                    <select id="pattern-mode">
+                        <option value="pedagogical" selected>Pedagogical (Traditional)</option>
+                        <option value="random">Random (Rule-based)</option>
+                        <option value="custom">Custom (Enter Your Own)</option>
                     </select>
                 </div>
 
-                <div class="setting-group">
-                    <label for="notation">Notation System:</label>
-                    <select id="notation">
+                <!-- Custom pattern input (hidden by default) -->
+                <div id="custom-pattern-container" class="custom-pattern-container" style="display: none;">
+                    <label for="custom-pattern-input">Enter pattern (e.g., "1 3 5 3 1"):</label>
+                    <input type="text" id="custom-pattern-input" placeholder="1 3 5 3 1">
+                    <button id="use-custom-pattern-btn" class="btn-small">Use Pattern</button>
+                    <span id="custom-pattern-error" class="error-text"></span>
+                </div>
+
+                <div class="setting-row">
+                    <label for="scale">Scale:</label>
+                    <select id="scale">
+                        <optgroup label="Western Scales">
+                            <option value="major" selected>Major (Ionian)</option>
+                            <option value="natural-minor">Natural Minor (Aeolian)</option>
+                            <option value="harmonic-minor">Harmonic Minor</option>
+                            <option value="melodic-minor">Melodic Minor</option>
+                            <option value="pentatonic-major">Pentatonic Major</option>
+                            <option value="pentatonic-minor">Pentatonic Minor</option>
+                        </optgroup>
+                        <optgroup label="Hindustani Ragas">
+                            <option value="bhairav">Bhairav (Morning)</option>
+                            <option value="yaman">Yaman (Evening)</option>
+                            <option value="kafi">Kafi (Afternoon)</option>
+                            <option value="bilaval">Bilaval (Morning)</option>
+                            <option value="bhairavi">Bhairavi (Night)</option>
+                            <option value="todi">Todi (Afternoon)</option>
+                        </optgroup>
+                        <optgroup label="Carnatic Ragas">
+                            <option value="mayamalavagowla">Mayamalavagowla (15)</option>
+                            <option value="shankarabharanam">Shankarabharanam (29)</option>
+                            <option value="kalyani">Kalyani (65)</option>
+                            <option value="kharaharapriya">Kharaharapriya (22)</option>
+                            <option value="harikambhoji">Harikambhoji (28)</option>
+                            <option value="natabhairavi">Natabhairavi (20)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <label for="difficulty">Difficulty:</label>
+                    <select id="difficulty">
+                        <option value="easy">Easy (stepwise)</option>
+                        <option value="medium" selected>Medium (small skips)</option>
+                        <option value="hard">Hard (large intervals)</option>
+                    </select>
+                </div>
+
+                <button id="generate-btn" class="btn btn-primary">Generate New Pattern</button>
+            </section>
+
+            <!-- Notation Display Settings -->
+            <section class="section">
+                <h2>Display Options</h2>
+
+                <div class="setting-row">
+                    <label>Show during playback:</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-numbers" checked>
+                            Numbers (1, 2, 3...)
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-syllables" checked>
+                            Syllables (Do/Sa, Re, Mi/Ga...)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="setting-row">
+                    <label for="syllable-system">Syllable System:</label>
+                    <select id="syllable-system">
                         <option value="western" selected>Western (Do Re Mi)</option>
                         <option value="hindustani">Hindustani (Sa Re Ga)</option>
                         <option value="carnatic">Carnatic (Sa Ri Ga)</option>
                     </select>
                 </div>
-
-                <div class="setting-group">
-                    <label for="speed">Speed:</label>
-                    <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
-                    <span id="speed-value">1.0x</span>
-                </div>
-
-                <div class="setting-group checkbox">
-                    <input type="checkbox" id="show-solfege" checked>
-                    <label for="show-solfege">Show syllables during playback</label>
-                </div>
             </section>
 
             <!-- Pattern Display -->
-            <section class="pattern-section">
+            <section class="section pattern-display-section">
                 <h2>Current Pattern</h2>
                 <div id="pattern-display" class="pattern-display">
-                    <span class="pattern-text">Click "Generate Pattern" to start</span>
+                    <span class="pattern-text">Click "Generate New Pattern" to start</span>
                 </div>
-                <button id="generate-btn" class="btn btn-primary">Generate New Pattern</button>
+                <div id="scale-info" class="scale-info"></div>
             </section>
 
             <!-- Visual Scale Display -->
-            <section class="scale-section">
+            <section class="section">
                 <h2>Scale Position</h2>
                 <div id="scale-visual" class="scale-visual">
                     <!-- Will be populated by JavaScript -->
@@ -65,26 +124,84 @@
             </section>
 
             <!-- Playback Controls -->
-            <section class="controls-section">
-                <button id="play-btn" class="btn btn-play" disabled>▶ Play</button>
-                <button id="pause-btn" class="btn" disabled>⏸ Pause</button>
-                <button id="repeat-btn" class="btn" disabled>🔄 Repeat</button>
+            <section class="section">
+                <h2>Playback</h2>
+
+                <!-- Practice Mode Toggle -->
+                <div class="practice-mode-toggle">
+                    <label>Practice Mode:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="practice-mode" value="listen" checked>
+                            Listen (computer plays)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="practice-mode" value="visual">
+                            Visual Only (silent)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="practice-mode" value="test">
+                            Test Mode (coming soon)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Main Playback Controls -->
+                <div class="playback-controls">
+                    <button id="play-btn" class="btn" disabled>Play</button>
+                    <button id="pause-btn" class="btn" disabled>Pause</button>
+                    <button id="restart-btn" class="btn" disabled>Restart</button>
+                    <button id="step-forward-btn" class="btn" disabled>Step →</button>
+                    <button id="replay-last-btn" class="btn" disabled>← Last</button>
+                </div>
+
+                <!-- Advanced Playback Options -->
+                <details class="advanced-controls">
+                    <summary>Advanced Controls</summary>
+
+                    <div class="setting-row">
+                        <label for="speed">Speed:</label>
+                        <input type="range" id="speed" min="0.5" max="2" step="0.1" value="1">
+                        <span id="speed-value">1.0x</span>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="loop-count">Loop pattern:</label>
+                        <input type="number" id="loop-count" min="1" max="10" value="1">
+                        <span>times</span>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="note-gap">Gap between notes:</label>
+                        <input type="range" id="note-gap" min="0" max="2000" step="100" value="500">
+                        <span id="note-gap-value">0.5s</span>
+                    </div>
+
+                    <div class="setting-row">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="manual-mode">
+                            Manual stepping (click to play each note)
+                        </label>
+                    </div>
+                </details>
             </section>
 
-            <!-- Future Features Info -->
-            <section class="info-section">
+            <!-- Coming Soon Sections -->
+            <section class="section info-section">
                 <details>
-                    <summary>Coming Soon: Test Mode & Pitch Detection</summary>
+                    <summary>Coming Soon</summary>
                     <ul>
-                        <li><strong>Test Mode:</strong> Sing back the pattern and get real-time pitch feedback</li>
-                        <li><strong>Guessing Mode:</strong> Identify intervals and notes by ear</li>
-                        <li><strong>Accuracy Tracking:</strong> Track your progress over time</li>
+                        <li>Test Mode: Real-time pitch detection and feedback</li>
+                        <li>Guessing Mode: Identify intervals by ear</li>
+                        <li>Practice History: Calendar and progress tracking</li>
+                        <li>Interval Names: Learn interval labels</li>
                     </ul>
                 </details>
             </section>
         </main>
     </div>
 
+    <script src="scales.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
