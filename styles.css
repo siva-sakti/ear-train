@@ -528,3 +528,143 @@ details[open] summary {
         width: 100%;
     }
 }
+
+/* ========================================
+   HANDDRAWN ELEMENTS
+   Assets go in /assets folder
+   See /assets/ASSETS_GUIDE.md for specs
+   ======================================== */
+
+/* Corner Doodles */
+.container {
+    position: relative;
+}
+
+.container::before,
+.container::after {
+    content: '';
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.container::before {
+    top: 0;
+    left: 0;
+    background-image: url('../assets/doodle-corner-tl.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.container::after {
+    top: 0;
+    right: 0;
+    background-image: url('../assets/doodle-corner-tr.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+/* Section with dividers */
+.section {
+    position: relative;
+}
+
+.section:not(:last-child)::after {
+    content: '';
+    display: block;
+    height: 20px;
+    margin: 16px 0;
+    background-image: url('../assets/section-divider.png');
+    background-repeat: repeat-x;
+    background-position: center;
+    background-size: auto 20px;
+    opacity: 0.5;
+}
+
+/* Handdrawn Buttons - Play/Pause/Restart */
+#play-btn {
+    background-image: url('../assets/play-button.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+#pause-btn {
+    background-image: url('../assets/pause-button.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+#restart-btn {
+    background-image: url('../assets/restart-button.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Generic button border for all other buttons */
+.btn:not(#play-btn):not(#pause-btn):not(#restart-btn) {
+    background-image: url('../assets/button-border.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Handdrawn Note Circles */
+.note-circle {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.note-circle:not(.in-pattern):not(.active) {
+    background-image: url('../assets/note-circle-inactive.png');
+}
+
+.note-circle.in-pattern:not(.active) {
+    background-image: url('../assets/note-circle-pattern.png');
+}
+
+.note-circle.active {
+    background-image: url('../assets/note-circle-active.png');
+}
+
+/* Pattern Input Boxes */
+.pattern-box {
+    background-image: url('../assets/pattern-box.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Notebook Paper Background for Pattern Display */
+.pattern-display {
+    background-image: url('../assets/notebook-paper.png');
+    background-repeat: repeat;
+    background-size: auto 40px;
+}
+
+/* Optional: Handwritten Digits (if you create them) */
+.handwritten-digit {
+    display: inline-block;
+    width: 40px;
+    height: 50px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.handwritten-digit[data-digit="0"] { background-image: url('../assets/digit-0.png'); }
+.handwritten-digit[data-digit="1"] { background-image: url('../assets/digit-1.png'); }
+.handwritten-digit[data-digit="2"] { background-image: url('../assets/digit-2.png'); }
+.handwritten-digit[data-digit="3"] { background-image: url('../assets/digit-3.png'); }
+.handwritten-digit[data-digit="4"] { background-image: url('../assets/digit-4.png'); }
+.handwritten-digit[data-digit="5"] { background-image: url('../assets/digit-5.png'); }
+.handwritten-digit[data-digit="6"] { background-image: url('../assets/digit-6.png'); }
+.handwritten-digit[data-digit="7"] { background-image: url('../assets/digit-7.png'); }
+.handwritten-digit[data-digit="8"] { background-image: url('../assets/digit-8.png'); }
+.handwritten-digit[data-digit="9"] { background-image: url('../assets/digit-9.png'); }
