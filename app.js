@@ -64,8 +64,7 @@ let currentPatternMode = 'pedagogical';
 let syllableSystem = 'western';
 let showNumbers = true;
 let showSyllables = true;
-let practiceMode = 'listen'; // 'listen', 'practice', 'test'
-let practiceSoundEnabled = true;
+let practiceMode = 'listen'; // 'listen', 'self-paced', 'test'
 let playbackSpeed = 1.0;
 let noteDuration = 500; // milliseconds
 let isPlaying = false;
@@ -99,8 +98,11 @@ const elements = {
 
     // Playback controls
     practiceModeRadios: document.querySelectorAll('input[name="practice-mode"]'),
-    practiceSoundToggle: document.getElementById('practice-sound-toggle'),
-    practiceSoundEnabled: document.getElementById('practice-sound-enabled'),
+    selfPacedControls: document.getElementById('self-paced-controls'),
+    checkNoteBtn: document.getElementById('check-note-btn'),
+    nextNoteBtn: document.getElementById('next-note-btn'),
+    restartSelfPacedBtn: document.getElementById('restart-self-paced-btn'),
+    playbackControls: document.querySelector('.playback-controls'),
     playBtn: document.getElementById('play-btn'),
     pauseBtn: document.getElementById('pause-btn'),
     restartBtn: document.getElementById('restart-btn'),
@@ -149,10 +151,15 @@ function setupEventListeners() {
         radio.addEventListener('change', handlePracticeModeChange);
     });
 
-    if (elements.practiceSoundEnabled) {
-        elements.practiceSoundEnabled.addEventListener('change', (e) => {
-            practiceSoundEnabled = e.target.checked;
-        });
+    // Self-paced controls
+    if (elements.checkNoteBtn) {
+        elements.checkNoteBtn.addEventListener('click', checkCurrentNote);
+    }
+    if (elements.nextNoteBtn) {
+        elements.nextNoteBtn.addEventListener('click', moveToNextNote);
+    }
+    if (elements.restartSelfPacedBtn) {
+        elements.restartSelfPacedBtn.addEventListener('click', restartSelfPaced);
     }
 
     // Playback controls
@@ -214,6 +221,11 @@ function generateNewPattern() {
     updateScaleInfo();
     enablePlaybackControls();
     resetPlaybackState();
+
+    // If in self-paced mode, start it automatically
+    if (practiceMode === 'self-paced') {
+        startSelfPacedMode();
+    }
 }
 
 function generatePedagogicalPattern() {
@@ -278,20 +290,29 @@ function handleSyllableSystemChange(e) {
 function handlePracticeModeChange(e) {
     practiceMode = e.target.value;
 
-    // Show/hide practice sound toggle
-    if (practiceMode === 'practice') {
-        elements.practiceSoundToggle.style.display = 'block';
-    } else {
-        elements.practiceSoundToggle.style.display = 'none';
-    }
+    // Stop any playback
+    resetPlaybackState();
 
-    // Disable test mode for now
-    if (practiceMode === 'test') {
+    if (practiceMode === 'self-paced') {
+        // Show self-paced controls, hide auto-play controls
+        elements.selfPacedControls.style.display = 'block';
+        elements.playbackControls.style.display = 'none';
+
+        // If pattern exists, start self-paced mode
+        if (currentPattern.length > 0) {
+            startSelfPacedMode();
+        }
+    } else if (practiceMode === 'listen') {
+        // Show auto-play controls, hide self-paced
+        elements.selfPacedControls.style.display = 'none';
+        elements.playbackControls.style.display = 'flex';
+    } else if (practiceMode === 'test') {
         alert('Test mode coming soon!');
         // Reset to listen mode
         document.querySelector('input[value="listen"]').checked = true;
         practiceMode = 'listen';
-        elements.practiceSoundToggle.style.display = 'none';
+        elements.selfPacedControls.style.display = 'none';
+        elements.playbackControls.style.display = 'flex';
     }
 }
 
@@ -418,8 +439,7 @@ function getIntervalName(steps) {
 // ===== AUDIO PLAYBACK =====
 function playNote(noteNumber, duration = 0.5) {
     // Check if sound should play
-    const shouldPlaySound = practiceMode === 'listen' ||
-                           (practiceMode === 'practice' && practiceSoundEnabled);
+    const shouldPlaySound = practiceMode === 'listen' || practiceMode === 'self-paced';
 
     if (!shouldPlaySound) return;
     if (!audioContext) return;
@@ -539,6 +559,53 @@ function resetPlaybackState() {
 function enablePlaybackControls() {
     elements.playBtn.disabled = false;
     elements.restartBtn.disabled = false;
+}
+
+// ===== SELF-PACED MODE =====
+function startSelfPacedMode() {
+    currentNoteIndex = 0;
+    lastNote = null;
+
+    // Highlight first note
+    highlightNote(0);
+
+    // Enable self-paced controls
+    elements.checkNoteBtn.disabled = false;
+    elements.nextNoteBtn.disabled = false;
+    elements.restartSelfPacedBtn.disabled = false;
+}
+
+function checkCurrentNote() {
+    if (currentNoteIndex >= currentPattern.length) return;
+
+    const note = currentPattern[currentNoteIndex];
+    const durationSec = noteDuration / 1000;
+
+    // Play the current note on demand
+    playNote(note, durationSec);
+}
+
+function moveToNextNote() {
+    if (currentNoteIndex >= currentPattern.length - 1) {
+        // Pattern complete
+        currentNoteIndex = currentPattern.length;
+        elements.checkNoteBtn.disabled = true;
+        elements.nextNoteBtn.disabled = true;
+        highlightNote(-1); // Clear highlight
+        return;
+    }
+
+    // Move to next note
+    currentNoteIndex++;
+    highlightNote(currentNoteIndex);
+}
+
+function restartSelfPaced() {
+    currentNoteIndex = 0;
+    lastNote = null;
+    highlightNote(0);
+    elements.checkNoteBtn.disabled = false;
+    elements.nextNoteBtn.disabled = false;
 }
 
 // ===== START APP =====

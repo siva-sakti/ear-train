@@ -134,11 +134,11 @@
                     <div class="radio-group">
                         <label class="radio-label">
                             <input type="radio" name="practice-mode" value="listen" checked>
-                            Listen (just listen)
+                            Listen (auto-play)
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="practice-mode" value="practice">
-                            Practice Along (sing along)
+                            <input type="radio" name="practice-mode" value="self-paced">
+                            Self-Paced (you control)
                         </label>
                         <label class="radio-label">
                             <input type="radio" name="practice-mode" value="test">
@@ -146,12 +146,16 @@
                         </label>
                     </div>
 
-                    <!-- Sound toggle for practice mode -->
-                    <div id="practice-sound-toggle" class="practice-sound-toggle" style="display: none;">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="practice-sound-enabled" checked>
-                            Play sound (toggle on when you want to check your pitch)
-                        </label>
+                    <!-- Self-paced controls -->
+                    <div id="self-paced-controls" class="self-paced-controls" style="display: none;">
+                        <p style="margin-bottom: 12px; color: var(--text-subtle); font-size: 0.95em;">
+                            Try to sing the highlighted note, then check if you got it right:
+                        </p>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button id="check-note-btn" class="btn" disabled>Play Current Note</button>
+                            <button id="next-note-btn" class="btn" disabled>Next Note →</button>
+                            <button id="restart-self-paced-btn" class="btn" disabled>Start Over</button>
+                        </div>
                     </div>
                 </div>
 
