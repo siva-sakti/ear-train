@@ -77,8 +77,9 @@ const elements = {
     // Pattern settings
     patternMode: document.getElementById('pattern-mode'),
     customPatternContainer: document.getElementById('custom-pattern-container'),
-    customPatternInput: document.getElementById('custom-pattern-input'),
+    customPatternBoxes: document.getElementById('custom-pattern-boxes'),
     useCustomPatternBtn: document.getElementById('use-custom-pattern-btn'),
+    clearCustomPatternBtn: document.getElementById('clear-custom-pattern-btn'),
     customPatternError: document.getElementById('custom-pattern-error'),
     scale: document.getElementById('scale'),
     difficulty: document.getElementById('difficulty'),
@@ -106,8 +107,6 @@ const elements = {
     playBtn: document.getElementById('play-btn'),
     pauseBtn: document.getElementById('pause-btn'),
     restartBtn: document.getElementById('restart-btn'),
-    stepForwardBtn: document.getElementById('step-forward-btn'),
-    replayLastBtn: document.getElementById('replay-last-btn'),
 
     // Advanced controls
     noteDuration: document.getElementById('note-duration'),
@@ -140,6 +139,11 @@ function setupEventListeners() {
     elements.scale.addEventListener('change', handleScaleChange);
     elements.difficulty.addEventListener('change', handleDifficultyChange);
     elements.generateBtn.addEventListener('click', generateNewPattern);
+
+    // Custom pattern
+    elements.useCustomPatternBtn.addEventListener('click', useCustomPattern);
+    elements.clearCustomPatternBtn.addEventListener('click', clearCustomPattern);
+    initializeCustomPatternBoxes();
 
     // Display settings
     elements.showNumbers.addEventListener('change', handleDisplayToggle);
@@ -242,6 +246,206 @@ function generateRandomPattern() {
     // TODO: Implement random pattern generation with interval constraints
     // For now, fall back to pedagogical
     generatePedagogicalPattern();
+}
+
+// ===== CUSTOM PATTERN =====
+const MAX_PATTERN_LENGTH = 12;
+
+function initializeCustomPatternBoxes() {
+    // Start with one empty box
+    createPatternBox();
+}
+
+function createPatternBox() {
+    const boxes = elements.customPatternBoxes.querySelectorAll('.pattern-box');
+    if (boxes.length >= MAX_PATTERN_LENGTH) return null;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'pattern-box';
+    input.maxLength = 1;
+    input.inputMode = 'numeric';
+    input.pattern = '[0-9]';
+
+    input.addEventListener('input', handleBoxInput);
+    input.addEventListener('keydown', handleBoxKeydown);
+    input.addEventListener('paste', handleBoxPaste);
+
+    elements.customPatternBoxes.appendChild(input);
+    return input;
+}
+
+function handleBoxInput(e) {
+    const input = e.target;
+    const value = input.value;
+
+    // Only allow digits
+    if (!/^\d$/.test(value)) {
+        input.value = '';
+        return;
+    }
+
+    // Remove error state
+    input.classList.remove('error');
+    elements.customPatternError.textContent = '';
+
+    // Validate against current scale
+    const scaleLength = getScaleLength(currentScale);
+    const noteNum = parseInt(value);
+
+    if (noteNum < 1 || noteNum > scaleLength) {
+        input.classList.add('error');
+        elements.customPatternError.textContent = `Note must be between 1 and ${scaleLength} for ${SCALE_LIBRARY[currentScale].name}`;
+        return;
+    }
+
+    // Create next box if this is the last one
+    const boxes = elements.customPatternBoxes.querySelectorAll('.pattern-box');
+    const currentIndex = Array.from(boxes).indexOf(input);
+
+    if (currentIndex === boxes.length - 1 && boxes.length < MAX_PATTERN_LENGTH) {
+        const nextBox = createPatternBox();
+        if (nextBox) {
+            nextBox.focus();
+        }
+    } else if (currentIndex < boxes.length - 1) {
+        // Focus next existing box
+        boxes[currentIndex + 1].focus();
+    }
+}
+
+function handleBoxKeydown(e) {
+    const input = e.target;
+    const boxes = elements.customPatternBoxes.querySelectorAll('.pattern-box');
+    const currentIndex = Array.from(boxes).indexOf(input);
+
+    // Backspace on empty box - go to previous and delete it
+    if (e.key === 'Backspace' && input.value === '' && currentIndex > 0) {
+        e.preventDefault();
+        const prevBox = boxes[currentIndex - 1];
+        prevBox.focus();
+        prevBox.value = '';
+
+        // Remove current empty box if it's not the last one
+        if (boxes.length > 1) {
+            input.remove();
+        }
+    }
+
+    // Arrow keys for navigation
+    if (e.key === 'ArrowLeft' && currentIndex > 0) {
+        e.preventDefault();
+        boxes[currentIndex - 1].focus();
+    }
+    if (e.key === 'ArrowRight' && currentIndex < boxes.length - 1) {
+        e.preventDefault();
+        boxes[currentIndex + 1].focus();
+    }
+}
+
+function handleBoxPaste(e) {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text');
+    const numbers = pasteData.match(/\d/g);
+
+    if (!numbers) return;
+
+    const boxes = elements.customPatternBoxes.querySelectorAll('.pattern-box');
+    const currentIndex = Array.from(boxes).indexOf(e.target);
+
+    // Clear existing boxes after current
+    for (let i = boxes.length - 1; i > currentIndex; i--) {
+        boxes[i].remove();
+    }
+
+    // Fill boxes with pasted numbers
+    const scaleLength = getScaleLength(currentScale);
+    let boxIndex = currentIndex;
+
+    for (let i = 0; i < numbers.length && boxIndex < MAX_PATTERN_LENGTH; i++) {
+        const num = parseInt(numbers[i]);
+
+        // Validate number
+        if (num < 1 || num > scaleLength) {
+            elements.customPatternError.textContent = `Note ${num} exceeds scale length (${scaleLength})`;
+            continue;
+        }
+
+        // Get or create box
+        let box = elements.customPatternBoxes.querySelectorAll('.pattern-box')[boxIndex];
+        if (!box) {
+            box = createPatternBox();
+        }
+
+        if (box) {
+            box.value = num;
+            boxIndex++;
+        }
+    }
+
+    // Create one empty box at the end if under limit
+    const finalBoxes = elements.customPatternBoxes.querySelectorAll('.pattern-box');
+    if (finalBoxes.length < MAX_PATTERN_LENGTH) {
+        const newBox = createPatternBox();
+        if (newBox) newBox.focus();
+    } else {
+        finalBoxes[finalBoxes.length - 1].focus();
+    }
+}
+
+function useCustomPattern() {
+    const boxes = elements.customPatternBoxes.querySelectorAll('.pattern-box');
+    const pattern = [];
+    const scaleLength = getScaleLength(currentScale);
+
+    elements.customPatternError.textContent = '';
+
+    // Extract values from boxes
+    for (const box of boxes) {
+        if (box.value) {
+            const num = parseInt(box.value);
+
+            if (num < 1 || num > scaleLength) {
+                elements.customPatternError.textContent = `All notes must be between 1 and ${scaleLength}`;
+                box.classList.add('error');
+                return;
+            }
+
+            pattern.push(num);
+        }
+    }
+
+    if (pattern.length === 0) {
+        elements.customPatternError.textContent = 'Please enter at least one note';
+        return;
+    }
+
+    // Set as current pattern
+    currentPattern = pattern;
+
+    updatePatternDisplay();
+    updateScaleVisual();
+    updateScaleInfo();
+    enablePlaybackControls();
+    resetPlaybackState();
+
+    // If in self-paced mode, start it automatically
+    if (practiceMode === 'self-paced') {
+        startSelfPacedMode();
+    }
+
+    elements.customPatternError.textContent = '';
+}
+
+function clearCustomPattern() {
+    // Remove all boxes
+    elements.customPatternBoxes.innerHTML = '';
+
+    // Create one empty box
+    const newBox = createPatternBox();
+    if (newBox) newBox.focus();
+
+    elements.customPatternError.textContent = '';
 }
 
 function updatePatternDisplay() {
