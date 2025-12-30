@@ -34,6 +34,58 @@ body {
 .container {
     max-width: 900px;
     margin: 0 auto;
+    position: relative;
+}
+
+/* Corner Doodles */
+.container::before,
+.container::after {
+    content: '';
+    position: fixed;
+    width: 100px;
+    height: 100px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.container::before {
+    top: 10px;
+    left: 10px;
+    background-image: url('assets/tl.png');
+}
+
+.container::after {
+    top: 10px;
+    right: 10px;
+    background-image: url('assets/tr.png');
+}
+
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    width: 100px;
+    height: 100px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: -1;
+}
+
+body::before {
+    bottom: 10px;
+    left: 10px;
+    background-image: url('assets/bl.png');
+}
+
+body::after {
+    bottom: 10px;
+    right: 10px;
+    background-image: url('assets/br.png');
 }
 
 /* Header */
@@ -213,9 +265,6 @@ input[type="checkbox"], input[type="radio"] {
 .custom-pattern-container {
     margin-top: 12px;
     padding: 16px;
-    border: 2px solid var(--border);
-    border-radius: 16px;
-    background: var(--surface);
 }
 
 .custom-pattern-boxes {
@@ -228,28 +277,27 @@ input[type="checkbox"], input[type="radio"] {
 }
 
 .pattern-box {
-    width: 40px;
-    height: 50px;
-    border: 2px solid var(--border);
-    border-radius: 8px;
+    width: 50px;
+    height: 60px;
+    border: none;
     text-align: center;
     font-size: 1.3em;
     font-family: 'Patrick Hand', cursive;
     padding: 4px;
-    background: var(--bg);
+    background-image: url('../assets/pattern-box.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
     transition: all 0.2s ease;
 }
 
 .pattern-box:focus {
     outline: none;
-    border-color: var(--accent);
-    background: var(--surface);
-    box-shadow: 0 0 0 3px rgba(230, 217, 246, 0.3);
+    transform: scale(1.1);
 }
 
 .pattern-box.error {
-    border-color: var(--error);
-    background: rgba(255, 100, 100, 0.1);
+    opacity: 0.5;
 }
 
 .custom-pattern-actions {
@@ -626,6 +674,8 @@ details[open] summary {
     min-height: 50px;
     width: 100px;
     height: 50px;
+    max-width: 100px;
+    max-height: 50px;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -634,6 +684,7 @@ details[open] summary {
     border: none;
     background-color: transparent;
     padding: 0;
+    flex-shrink: 0;
 }
 
 #play-btn {
@@ -656,7 +707,9 @@ details[open] summary {
     background-position: center;
     min-width: 120px;
     min-height: 60px;
+    max-height: 60px;
     padding: 12px 24px;
+    flex-shrink: 0;
 }
 
 /* Small buttons (like pakad play buttons) */
@@ -667,13 +720,15 @@ details[open] summary {
     background-position: center;
     min-width: 80px;
     min-height: 40px;
+    max-height: 40px;
     padding: 8px 16px;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 /* Handdrawn Note Circles */
 .note-circle {
-    background-size: contain;
+    background-size: 100% 100%;
     background-repeat: no-repeat;
     background-position: center;
 }
@@ -707,14 +762,25 @@ details[open] summary {
 }
 */
 
-/* Optional: Handwritten Digits (if you create them) */
+/* Handwritten Digits */
 .handwritten-digit {
     display: inline-block;
-    width: 40px;
-    height: 50px;
+    width: 20px;
+    height: 25px;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+}
+
+/* Larger digits for pattern display and current note */
+.pattern-text .handwritten-digit {
+    width: 40px;
+    height: 50px;
+}
+
+.current-note-display .handwritten-digit {
+    width: 60px;
+    height: 75px;
 }
 
 .handwritten-digit[data-digit="0"] { background-image: url('../assets/digit-0.png'); }
