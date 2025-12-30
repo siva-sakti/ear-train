@@ -271,15 +271,12 @@ input[type="checkbox"], input[type="radio"] {
 }
 
 .pattern-display {
-    background: var(--surface);
-    border: 2px solid var(--accent);
     padding: 32px;
     margin-bottom: 8px;
     min-height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 24px;  /* Oval shape */
 }
 
 .pattern-text {
@@ -301,23 +298,8 @@ input[type="checkbox"], input[type="radio"] {
     justify-content: space-around;
     align-items: center;
     padding: 32px 16px;
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 32px;
     margin-bottom: 8px;
     position: relative;
-}
-
-.scale-visual::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 8%;
-    right: 8%;
-    height: 2px;
-    background: var(--border);
-    z-index: 0;
-    border-radius: 2px;
 }
 
 .note-circle {
@@ -620,33 +602,36 @@ details[open] summary {
     background-repeat: no-repeat;
 }
 
-/* Section with dividers - REMOVED, using handdrawn dividers */
-/*
+/* Section dividers - using handdrawn divider */
 .section:not(:last-child)::after {
     content: '';
     display: block;
     height: 20px;
-    margin: 16px 0;
-    background-image: url('../assets/section-divider.png');
+    margin: 24px 0 16px 0;
+    background-image: url('assets/section-divider.png');
     background-repeat: repeat-x;
     background-position: center;
     background-size: auto 20px;
-    opacity: 0.5;
+    opacity: 0.6;
 }
-*/
 
 /* Handdrawn Buttons - Play/Pause/Restart */
 /* Text is hidden because it's drawn into the button images */
 #play-btn,
 #pause-btn,
 #restart-btn {
-    background-size: 100% 100%;
+    min-width: 100px;
+    min-height: 50px;
+    width: 100px;
+    height: 50px;
+    background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
     color: transparent;
     text-indent: -9999px;
-    border: none;  /* Remove CSS border, using image only */
-    background-color: transparent;  /* Remove background color */
+    border: none;
+    background-color: transparent;
+    padding: 0;
 }
 
 #play-btn {
@@ -662,11 +647,26 @@ details[open] summary {
 }
 
 /* Generic button border for all other buttons */
-.btn:not(#play-btn):not(#pause-btn):not(#restart-btn) {
+.btn:not(#play-btn):not(#pause-btn):not(#restart-btn):not(.btn-small) {
     background-image: url('../assets/button-border.png');
-    background-size: 100% 100%;
+    background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+    min-width: 120px;
+    min-height: 60px;
+    padding: 12px 24px;
+}
+
+/* Small buttons (like pakad play buttons) */
+.btn-small {
+    background-image: url('../assets/button-border.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    min-width: 80px;
+    min-height: 40px;
+    padding: 8px 16px;
+    white-space: nowrap;
 }
 
 /* Handdrawn Note Circles */
@@ -740,9 +740,7 @@ details[open] summary {
     flex-direction: column;
     align-items: center;
     padding: 16px;
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 16px;
+    border-bottom: 1px solid var(--border);
     flex: 1;
     min-width: 120px;
 }
@@ -852,15 +850,8 @@ details[open] summary {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 12px 16px;
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 16px;
+    padding: 12px 0;
     transition: all 0.2s;
-}
-
-.pakad-item:hover {
-    border-color: var(--accent);
 }
 
 .pakad-pattern {

@@ -225,6 +225,26 @@ function setupEventListeners() {
     });
 }
 
+// ===== UTILITY FUNCTIONS =====
+function numberToHanddrawn(num) {
+    // Convert a number to handdrawn digit spans
+    const digits = num.toString().split('');
+    return digits.map(digit =>
+        `<span class="handwritten-digit" data-digit="${digit}"></span>`
+    ).join('');
+}
+
+function stringToHanddrawn(str) {
+    // Convert a string of numbers (like "1 2 3") to handdrawn digits
+    return str.split('').map(char => {
+        if (char >= '0' && char <= '9') {
+            return `<span class="handwritten-digit" data-digit="${char}"></span>`;
+        } else {
+            return char; // Keep spaces and other characters
+        }
+    }).join('');
+}
+
 // ===== PATTERN GENERATION =====
 function handlePatternModeChange(e) {
     currentPatternMode = e.target.value;
@@ -570,7 +590,8 @@ function clearCustomPattern() {
 
 function updatePatternDisplay() {
     const patternText = currentPattern.join(' ');
-    elements.patternDisplay.innerHTML = `<span class="pattern-text">${patternText}</span>`;
+    const handdrawnText = stringToHanddrawn(patternText);
+    elements.patternDisplay.innerHTML = `<span class="pattern-text">${handdrawnText}</span>`;
 }
 
 function updateScaleInfo() {
@@ -679,7 +700,8 @@ function updateScaleVisual() {
         let content = '';
 
         if (showNumbers) {
-            content += `<div class="note-number">${noteNum}</div>`;
+            const handdrawnNum = numberToHanddrawn(noteNum);
+            content += `<div class="note-number">${handdrawnNum}</div>`;
         }
 
         if (showSyllables) {
@@ -709,22 +731,22 @@ function highlightNote(noteIndex) {
 
         // Update current note display
         const scale = SCALE_LIBRARY[currentScale];
-        let displayText = '';
+        let displayHTML = '';
 
         if (showNumbers) {
-            displayText += note;
+            displayHTML += numberToHanddrawn(note);
         }
 
         if (showSyllables) {
             const syllable = scale.solfege[syllableSystem][note - 1];
             if (showNumbers) {
-                displayText += ` (${syllable})`;
+                displayHTML += ` (${syllable})`;
             } else {
-                displayText = syllable;
+                displayHTML = syllable;
             }
         }
 
-        elements.currentNote.textContent = displayText;
+        elements.currentNote.innerHTML = displayHTML;
 
         // Show interval from previous note
         if (lastNote !== null && noteIndex > 0) {
@@ -1284,7 +1306,8 @@ function updatePakadDisplay() {
         // Display the phrase as numbers
         const patternDiv = document.createElement('div');
         patternDiv.className = 'pakad-pattern';
-        patternDiv.textContent = phrase.join(' ');
+        const phraseText = phrase.join(' ');
+        patternDiv.innerHTML = stringToHanddrawn(phraseText);
 
         // Create play button
         const playBtn = document.createElement('button');
