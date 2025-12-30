@@ -37,7 +37,7 @@ body {
     position: relative;
 }
 
-/* Corner Doodles */
+/* Corner Doodles - DISABLED (covering content, not all showing)
 .container::before,
 .container::after {
     content: '';
@@ -87,6 +87,7 @@ body::after {
     right: 10px;
     background-image: url('../assets/br.png');
 }
+*/
 
 /* Header */
 header {
@@ -322,8 +323,8 @@ input[type="checkbox"], input[type="radio"] {
 }
 
 .note-circle {
-    width: 90px;
-    height: 90px;
+    width: 110px;
+    height: 110px;
     border: none;
     border-radius: 0;
     background: transparent;
@@ -701,7 +702,7 @@ details[open] summary {
 
 /* Handdrawn Note Circles */
 .note-circle {
-    background-size: 100% 100%;
+    background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
 }
