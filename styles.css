@@ -529,6 +529,61 @@ details[open] summary {
     }
 }
 
+/* Pattern Bookmarks */
+.bookmarks-list {
+    margin-top: 16px;
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--text-subtle);
+    font-style: italic;
+    padding: 24px;
+}
+
+.bookmark-item {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.bookmark-item:hover {
+    border-color: var(--accent);
+    background: rgba(230, 217, 246, 0.1);
+}
+
+.bookmark-info {
+    flex: 1;
+}
+
+.bookmark-pattern {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.2em;
+    margin-bottom: 4px;
+    color: var(--text);
+}
+
+.bookmark-meta {
+    font-size: 0.85em;
+    color: var(--text-subtle);
+}
+
+.bookmark-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.bookmark-actions .btn {
+    padding: 6px 12px;
+    font-size: 0.9em;
+}
+
 /* ========================================
    HANDDRAWN ELEMENTS
    Assets go in /assets folder

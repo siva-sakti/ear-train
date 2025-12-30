@@ -119,7 +119,11 @@ const elements = {
     speed: document.getElementById('speed'),
     speedValue: document.getElementById('speed-value'),
     loopCount: document.getElementById('loop-count'),
-    manualMode: document.getElementById('manual-mode')
+    manualMode: document.getElementById('manual-mode'),
+
+    // Bookmarks
+    bookmarkPatternBtn: document.getElementById('bookmark-pattern-btn'),
+    bookmarksList: document.getElementById('bookmarks-list')
 };
 
 // ===== INITIALIZATION =====
@@ -132,6 +136,9 @@ function init() {
 
     // Initialize scale visual
     createScaleVisual();
+
+    // Load bookmarks
+    loadBookmarks();
 
     console.log('Ear Training App initialized');
 }
@@ -147,6 +154,9 @@ function setupEventListeners() {
     elements.useCustomPatternBtn.addEventListener('click', useCustomPattern);
     elements.clearCustomPatternBtn.addEventListener('click', clearCustomPattern);
     initializeCustomPatternBoxes();
+
+    // Bookmarks
+    elements.bookmarkPatternBtn.addEventListener('click', bookmarkCurrentPattern);
 
     // Display settings
     elements.showNumbers.addEventListener('change', handleDisplayToggle);
@@ -881,6 +891,7 @@ function updateLoopIndicator() {
 function enablePlaybackControls() {
     elements.playBtn.disabled = false;
     elements.restartBtn.disabled = false;
+    elements.bookmarkPatternBtn.disabled = false;
 }
 
 // ===== SELF-PACED MODE =====
@@ -928,6 +939,138 @@ function restartSelfPaced() {
     highlightNote(0);
     elements.checkNoteBtn.disabled = false;
     elements.nextNoteBtn.disabled = false;
+}
+
+// ===== BOOKMARKS =====
+function bookmarkCurrentPattern() {
+    if (currentPattern.length === 0) return;
+
+    const bookmark = {
+        id: Date.now(),
+        pattern: [...currentPattern],
+        scale: currentScale,
+        difficulty: currentDifficulty,
+        patternMode: currentPatternMode,
+        date: new Date().toISOString()
+    };
+
+    // Get existing bookmarks
+    const bookmarks = getBookmarks();
+
+    // Add new bookmark at the beginning
+    bookmarks.unshift(bookmark);
+
+    // Limit to 20 bookmarks
+    if (bookmarks.length > 20) {
+        bookmarks.pop();
+    }
+
+    // Save to localStorage
+    localStorage.setItem('earTrainingBookmarks', JSON.stringify(bookmarks));
+
+    // Reload bookmarks display
+    loadBookmarks();
+
+    // Visual feedback
+    elements.bookmarkPatternBtn.textContent = '✓ Bookmarked!';
+    setTimeout(() => {
+        elements.bookmarkPatternBtn.textContent = '⭐ Bookmark This Pattern';
+    }, 2000);
+}
+
+function getBookmarks() {
+    const stored = localStorage.getItem('earTrainingBookmarks');
+    return stored ? JSON.parse(stored) : [];
+}
+
+function loadBookmarks() {
+    const bookmarks = getBookmarks();
+
+    if (bookmarks.length === 0) {
+        elements.bookmarksList.innerHTML = '<p class="empty-state">No bookmarks yet. Generate a pattern and bookmark it!</p>';
+        return;
+    }
+
+    elements.bookmarksList.innerHTML = '';
+
+    bookmarks.forEach(bookmark => {
+        const item = document.createElement('div');
+        item.className = 'bookmark-item';
+
+        const scale = SCALE_LIBRARY[bookmark.scale];
+        const date = new Date(bookmark.date);
+        const dateStr = date.toLocaleDateString();
+
+        item.innerHTML = `
+            <div class="bookmark-info">
+                <div class="bookmark-pattern">${bookmark.pattern.join(' ')}</div>
+                <div class="bookmark-meta">
+                    ${scale.name} • ${bookmark.difficulty} • ${dateStr}
+                </div>
+            </div>
+            <div class="bookmark-actions">
+                <button class="btn btn-small load-bookmark" data-id="${bookmark.id}">Load</button>
+                <button class="btn btn-small delete-bookmark" data-id="${bookmark.id}">Delete</button>
+            </div>
+        `;
+
+        elements.bookmarksList.appendChild(item);
+    });
+
+    // Add event listeners to buttons
+    document.querySelectorAll('.load-bookmark').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.dataset.id);
+            loadBookmark(id);
+        });
+    });
+
+    document.querySelectorAll('.delete-bookmark').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.dataset.id);
+            deleteBookmark(id);
+        });
+    });
+}
+
+function loadBookmark(id) {
+    const bookmarks = getBookmarks();
+    const bookmark = bookmarks.find(b => b.id === id);
+
+    if (!bookmark) return;
+
+    // Set scale and difficulty
+    currentScale = bookmark.scale;
+    currentDifficulty = bookmark.difficulty;
+    currentPatternMode = bookmark.patternMode;
+    currentPattern = [...bookmark.pattern];
+
+    // Update UI
+    elements.scale.value = bookmark.scale;
+    elements.difficulty.value = bookmark.difficulty;
+    elements.patternMode.value = bookmark.patternMode;
+
+    updatePatternDisplay();
+    updateScaleVisual();
+    updateScaleInfo();
+    enablePlaybackControls();
+    resetPlaybackState();
+
+    // If in self-paced mode, start it
+    if (practiceMode === 'self-paced') {
+        startSelfPacedMode();
+    }
+
+    // Scroll to pattern display
+    document.querySelector('.pattern-display-section').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function deleteBookmark(id) {
+    const bookmarks = getBookmarks();
+    const filtered = bookmarks.filter(b => b.id !== id);
+
+    localStorage.setItem('earTrainingBookmarks', JSON.stringify(filtered));
+    loadBookmarks();
 }
 
 // ===== START APP =====
