@@ -123,7 +123,17 @@ const elements = {
 
     // Bookmarks
     bookmarkPatternBtn: document.getElementById('bookmark-pattern-btn'),
-    bookmarksList: document.getElementById('bookmarks-list')
+    bookmarksList: document.getElementById('bookmarks-list'),
+
+    // Practice History
+    totalSessions: document.getElementById('total-sessions'),
+    currentStreak: document.getElementById('current-streak'),
+    totalPatterns: document.getElementById('total-patterns'),
+    practiceCalendar: document.getElementById('practice-calendar'),
+
+    // Pakad Phrases
+    pakadSection: document.getElementById('pakad-section'),
+    pakadPhrases: document.getElementById('pakad-phrases')
 };
 
 // ===== INITIALIZATION =====
@@ -139,6 +149,20 @@ function init() {
 
     // Load bookmarks
     loadBookmarks();
+
+    // Initialize practice history
+    initializePracticeHistory();
+
+    // Register service worker for PWA support
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then((registration) => {
+                console.log('Service Worker registered:', registration);
+            })
+            .catch((error) => {
+                console.log('Service Worker registration failed:', error);
+            });
+    }
 
     console.log('Ear Training App initialized');
 }
@@ -215,6 +239,7 @@ function handlePatternModeChange(e) {
 
 function handleScaleChange(e) {
     currentScale = e.target.value;
+    updatePakadDisplay();
     if (currentPattern.length > 0) {
         updateScaleVisual();
         updateScaleInfo();
@@ -861,6 +886,9 @@ function finishPlayback() {
         clearTimeout(playbackTimeout);
         playbackTimeout = null;
     }
+
+    // Record practice session
+    recordPracticeSession();
 }
 
 function resetPlaybackState() {
@@ -1071,6 +1099,234 @@ function deleteBookmark(id) {
 
     localStorage.setItem('earTrainingBookmarks', JSON.stringify(filtered));
     loadBookmarks();
+}
+
+// ===== PRACTICE HISTORY =====
+function recordPracticeSession() {
+    const today = new Date().toDateString();
+    const history = getPracticeHistory();
+
+    // Find or create today's entry
+    let todayEntry = history.sessions.find(s => s.date === today);
+    if (!todayEntry) {
+        todayEntry = { date: today, patterns: 0 };
+        history.sessions.push(todayEntry);
+    }
+
+    // Increment pattern count
+    todayEntry.patterns++;
+    history.totalPatterns++;
+
+    // Save to localStorage
+    localStorage.setItem('earTrainingHistory', JSON.stringify(history));
+
+    // Update UI
+    updatePracticeStats();
+    updatePracticeCalendar();
+}
+
+function getPracticeHistory() {
+    const stored = localStorage.getItem('earTrainingHistory');
+    if (stored) {
+        return JSON.parse(stored);
+    }
+    // Default structure
+    return {
+        sessions: [],
+        totalPatterns: 0
+    };
+}
+
+function updatePracticeStats() {
+    const history = getPracticeHistory();
+
+    // Total sessions (unique days)
+    elements.totalSessions.textContent = history.sessions.length;
+
+    // Total patterns played
+    elements.totalPatterns.textContent = history.totalPatterns;
+
+    // Calculate streak
+    const streak = calculateStreak(history.sessions);
+    elements.currentStreak.textContent = streak;
+}
+
+function calculateStreak(sessions) {
+    if (sessions.length === 0) return 0;
+
+    // Sort sessions by date (most recent first)
+    const sorted = sessions.map(s => new Date(s.date)).sort((a, b) => b - a);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Check if most recent session is today or yesterday
+    const mostRecent = sorted[0];
+    mostRecent.setHours(0, 0, 0, 0);
+
+    if (mostRecent.getTime() !== today.getTime() && mostRecent.getTime() !== yesterday.getTime()) {
+        return 0; // Streak broken
+    }
+
+    // Count consecutive days
+    let streak = 1;
+    let currentDate = new Date(mostRecent);
+
+    for (let i = 1; i < sorted.length; i++) {
+        const prevDate = new Date(sorted[i]);
+        prevDate.setHours(0, 0, 0, 0);
+
+        const expectedDate = new Date(currentDate);
+        expectedDate.setDate(expectedDate.getDate() - 1);
+
+        if (prevDate.getTime() === expectedDate.getTime()) {
+            streak++;
+            currentDate = prevDate;
+        } else {
+            break;
+        }
+    }
+
+    return streak;
+}
+
+function updatePracticeCalendar() {
+    const history = getPracticeHistory();
+    const today = new Date();
+
+    // Generate last 28 days (4 weeks)
+    const days = [];
+    for (let i = 27; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        days.push(date);
+    }
+
+    // Create calendar header with weekday names
+    const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    let calendarHTML = '<div class="calendar-header">';
+    weekdays.forEach(day => {
+        calendarHTML += `<div class="calendar-weekday">${day}</div>`;
+    });
+    calendarHTML += '</div><div class="practice-calendar">';
+
+    // Add empty cells for alignment (first day of the first week)
+    const firstDayOfWeek = days[0].getDay();
+    for (let i = 0; i < firstDayOfWeek; i++) {
+        calendarHTML += '<div class="calendar-day empty"></div>';
+    }
+
+    // Add calendar days
+    days.forEach(date => {
+        const dateStr = date.toDateString();
+        const session = history.sessions.find(s => s.date === dateStr);
+        const isToday = dateStr === today.toDateString();
+
+        const classes = ['calendar-day'];
+        if (session) classes.push('has-practice');
+        if (isToday) classes.push('today');
+
+        const dayNumber = date.getDate();
+        const practiceCount = session ? `${session.patterns}×` : '';
+
+        calendarHTML += `
+            <div class="${classes.join(' ')}" title="${dateStr}${session ? ` - ${session.patterns} patterns` : ''}">
+                <span class="day-number">${dayNumber}</span>
+                ${session ? `<span class="practice-count">${practiceCount}</span>` : ''}
+            </div>
+        `;
+    });
+
+    calendarHTML += '</div>';
+
+    // Update the parent container (which includes both header and calendar)
+    const calendarContainer = elements.practiceCalendar.parentElement;
+    const existingHeader = calendarContainer.querySelector('.calendar-header');
+    if (existingHeader) {
+        existingHeader.remove();
+    }
+
+    elements.practiceCalendar.outerHTML = calendarHTML;
+
+    // Re-get the element reference after updating HTML
+    elements.practiceCalendar = document.getElementById('practice-calendar');
+}
+
+function initializePracticeHistory() {
+    updatePracticeStats();
+    updatePracticeCalendar();
+}
+
+// ===== PAKAD PHRASES =====
+function updatePakadDisplay() {
+    const scale = SCALE_LIBRARY[currentScale];
+
+    // Only show pakad for ragas that have them (Hindustani ragas)
+    if (!scale.pakad || scale.pakad.length === 0) {
+        elements.pakadSection.style.display = 'none';
+        return;
+    }
+
+    // Show the pakad section
+    elements.pakadSection.style.display = 'block';
+
+    // Clear existing phrases
+    elements.pakadPhrases.innerHTML = '';
+
+    // Display each pakad phrase
+    scale.pakad.forEach((phrase, index) => {
+        const item = document.createElement('div');
+        item.className = 'pakad-item';
+
+        // Display the phrase as numbers
+        const patternDiv = document.createElement('div');
+        patternDiv.className = 'pakad-pattern';
+        patternDiv.textContent = phrase.join(' ');
+
+        // Create play button
+        const playBtn = document.createElement('button');
+        playBtn.className = 'btn btn-small';
+        playBtn.textContent = 'Play';
+        playBtn.onclick = () => playPakadPhrase(phrase);
+
+        item.appendChild(patternDiv);
+        item.appendChild(playBtn);
+        elements.pakadPhrases.appendChild(item);
+    });
+}
+
+function playPakadPhrase(phrase) {
+    // Stop any current playback
+    if (isPlaying) {
+        pausePlayback();
+    }
+
+    // Play each note in the phrase
+    let noteIndex = 0;
+
+    function playNextPakadNote() {
+        if (noteIndex >= phrase.length) {
+            return;
+        }
+
+        const note = phrase[noteIndex];
+        const durationSec = noteDuration / 1000;
+
+        // Play the note
+        playNote(note, durationSec);
+
+        noteIndex++;
+
+        // Schedule next note
+        const gap = parseInt(elements.noteGap.value);
+        const totalDelay = (noteDuration + gap) / playbackSpeed;
+        setTimeout(() => playNextPakadNote(), totalDelay);
+    }
+
+    playNextPakadNote();
 }
 
 // ===== START APP =====

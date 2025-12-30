@@ -725,3 +725,152 @@ details[open] summary {
 .handwritten-digit[data-digit="7"] { background-image: url('../assets/digit-7.png'); }
 .handwritten-digit[data-digit="8"] { background-image: url('../assets/digit-8.png'); }
 .handwritten-digit[data-digit="9"] { background-image: url('../assets/digit-9.png'); }
+
+/* ===== PRACTICE HISTORY ===== */
+.practice-stats {
+    display: flex;
+    gap: 16px;
+    justify-content: space-around;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    flex: 1;
+    min-width: 120px;
+}
+
+.stat-value {
+    font-size: 2em;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.85em;
+    color: var(--text-subtle);
+    margin-top: 8px;
+}
+
+.practice-calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 8px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.calendar-day:hover {
+    border-color: var(--accent);
+}
+
+.calendar-day.has-practice {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.calendar-day.has-practice .day-number {
+    color: var(--bg);
+    font-weight: 600;
+}
+
+.calendar-day.has-practice .practice-count {
+    color: var(--bg);
+}
+
+.calendar-day.today {
+    border-color: var(--highlight);
+    border-width: 3px;
+}
+
+.day-number {
+    font-size: 1.1em;
+    font-weight: 500;
+    color: var(--text);
+}
+
+.practice-count {
+    font-size: 0.75em;
+    color: var(--text-subtle);
+    margin-top: 4px;
+}
+
+.calendar-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    max-width: 600px;
+    margin: 0 auto 12px;
+    text-align: center;
+}
+
+.calendar-weekday {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--text-subtle);
+    padding: 4px;
+}
+
+/* ===== PAKAD PHRASES ===== */
+.info-text {
+    color: var(--text-subtle);
+    font-size: 0.95em;
+    margin-bottom: 16px;
+}
+
+.pakad-phrases {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.pakad-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 16px;
+    transition: all 0.2s;
+}
+
+.pakad-item:hover {
+    border-color: var(--accent);
+}
+
+.pakad-pattern {
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.2em;
+    letter-spacing: 6px;
+    color: var(--text);
+    flex: 1;
+}
+
+.pakad-item .btn {
+    flex-shrink: 0;
+}
