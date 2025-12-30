@@ -38,6 +38,23 @@ const PATTERN_TEMPLATES = {
     ]
 };
 
+// Interval names mapping
+const INTERVAL_NAMES = {
+    0: 'Unison',
+    1: 'Minor Second',
+    2: 'Major Second',
+    3: 'Minor Third',
+    4: 'Major Third',
+    5: 'Perfect Fourth',
+    6: 'Tritone',
+    7: 'Perfect Fifth',
+    8: 'Minor Sixth',
+    9: 'Major Sixth',
+    10: 'Minor Seventh',
+    11: 'Major Seventh',
+    12: 'Octave'
+};
+
 // ===== STATE =====
 let audioContext = null;
 let currentPattern = [];
@@ -47,11 +64,14 @@ let currentPatternMode = 'pedagogical';
 let syllableSystem = 'western';
 let showNumbers = true;
 let showSyllables = true;
-let practiceMode = 'listen'; // 'listen', 'visual', 'test'
+let practiceMode = 'listen'; // 'listen', 'practice', 'test'
+let practiceSoundEnabled = true;
 let playbackSpeed = 1.0;
+let noteDuration = 500; // milliseconds
 let isPlaying = false;
 let currentNoteIndex = 0;
 let playbackTimeout = null;
+let lastNote = null;
 
 // ===== DOM ELEMENTS =====
 const elements = {
@@ -75,9 +95,12 @@ const elements = {
     scaleInfo: document.getElementById('scale-info'),
     scaleVisual: document.getElementById('scale-visual'),
     currentNote: document.getElementById('current-note'),
+    intervalDisplay: document.getElementById('interval-display'),
 
     // Playback controls
     practiceModeRadios: document.querySelectorAll('input[name="practice-mode"]'),
+    practiceSoundToggle: document.getElementById('practice-sound-toggle'),
+    practiceSoundEnabled: document.getElementById('practice-sound-enabled'),
     playBtn: document.getElementById('play-btn'),
     pauseBtn: document.getElementById('pause-btn'),
     restartBtn: document.getElementById('restart-btn'),
@@ -85,11 +108,13 @@ const elements = {
     replayLastBtn: document.getElementById('replay-last-btn'),
 
     // Advanced controls
+    noteDuration: document.getElementById('note-duration'),
+    noteDurationValue: document.getElementById('note-duration-value'),
+    noteGap: document.getElementById('note-gap'),
+    noteGapValue: document.getElementById('note-gap-value'),
     speed: document.getElementById('speed'),
     speedValue: document.getElementById('speed-value'),
     loopCount: document.getElementById('loop-count'),
-    noteGap: document.getElementById('note-gap'),
-    noteGapValue: document.getElementById('note-gap-value'),
     manualMode: document.getElementById('manual-mode')
 };
 
@@ -124,20 +149,31 @@ function setupEventListeners() {
         radio.addEventListener('change', handlePracticeModeChange);
     });
 
+    if (elements.practiceSoundEnabled) {
+        elements.practiceSoundEnabled.addEventListener('change', (e) => {
+            practiceSoundEnabled = e.target.checked;
+        });
+    }
+
     // Playback controls
     elements.playBtn.addEventListener('click', playPattern);
     elements.pauseBtn.addEventListener('click', pausePlayback);
     elements.restartBtn.addEventListener('click', restartPattern);
 
     // Advanced controls
-    elements.speed.addEventListener('input', (e) => {
-        playbackSpeed = parseFloat(e.target.value);
-        elements.speedValue.textContent = playbackSpeed.toFixed(1) + 'x';
+    elements.noteDuration.addEventListener('input', (e) => {
+        noteDuration = parseInt(e.target.value);
+        elements.noteDurationValue.textContent = (noteDuration / 1000).toFixed(1) + 's';
     });
 
     elements.noteGap.addEventListener('input', (e) => {
         const gap = parseInt(e.target.value);
         elements.noteGapValue.textContent = (gap / 1000).toFixed(1) + 's';
+    });
+
+    elements.speed.addEventListener('input', (e) => {
+        playbackSpeed = parseFloat(e.target.value);
+        elements.speedValue.textContent = playbackSpeed.toFixed(1) + 'x';
     });
 }
 
@@ -242,12 +278,20 @@ function handleSyllableSystemChange(e) {
 function handlePracticeModeChange(e) {
     practiceMode = e.target.value;
 
+    // Show/hide practice sound toggle
+    if (practiceMode === 'practice') {
+        elements.practiceSoundToggle.style.display = 'block';
+    } else {
+        elements.practiceSoundToggle.style.display = 'none';
+    }
+
     // Disable test mode for now
     if (practiceMode === 'test') {
         alert('Test mode coming soon!');
         // Reset to listen mode
         document.querySelector('input[value="listen"]').checked = true;
         practiceMode = 'listen';
+        elements.practiceSoundToggle.style.display = 'none';
     }
 }
 
@@ -336,16 +380,48 @@ function highlightNote(noteIndex) {
         }
 
         elements.currentNote.textContent = displayText;
+
+        // Show interval from previous note
+        if (lastNote !== null && noteIndex > 0) {
+            const interval = Math.abs(note - lastNote);
+            const direction = note > lastNote ? '↑' : '↓';
+            const intervalName = getIntervalName(interval);
+            elements.intervalDisplay.textContent = `${direction} ${intervalName}`;
+        } else {
+            elements.intervalDisplay.textContent = '';
+        }
+
+        lastNote = note;
     } else {
         elements.currentNote.textContent = '';
+        elements.intervalDisplay.textContent = '';
+        lastNote = null;
     }
+}
+
+function getIntervalName(steps) {
+    // Map scale steps to interval names
+    const intervalMap = {
+        0: 'Unison',
+        1: 'Second',
+        2: 'Third',
+        3: 'Fourth',
+        4: 'Fifth',
+        5: 'Sixth',
+        6: 'Seventh',
+        7: 'Octave'
+    };
+
+    return intervalMap[steps] || `${steps} steps`;
 }
 
 // ===== AUDIO PLAYBACK =====
 function playNote(noteNumber, duration = 0.5) {
-    // Don't play if in visual-only mode
-    if (practiceMode === 'visual') return;
+    // Check if sound should play
+    const shouldPlaySound = practiceMode === 'listen' ||
+                           (practiceMode === 'practice' && practiceSoundEnabled);
 
+    if (!shouldPlaySound) return;
     if (!audioContext) return;
 
     const scale = SCALE_LIBRARY[currentScale];
@@ -398,15 +474,15 @@ async function playNextNote() {
     // Visual feedback
     highlightNote(currentNoteIndex);
 
-    // Play the note
-    const noteDuration = 0.5;
-    playNote(note, noteDuration);
+    // Play the note with configured duration
+    const durationSec = noteDuration / 1000;
+    playNote(note, durationSec);
 
     currentNoteIndex++;
 
     // Get gap from settings
     const gap = parseInt(elements.noteGap.value);
-    const totalDelay = (noteDuration * 1000 + gap) / playbackSpeed;
+    const totalDelay = (noteDuration + gap) / playbackSpeed;
 
     playbackTimeout = setTimeout(() => playNextNote(), totalDelay);
 }
