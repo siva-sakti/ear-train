@@ -46,21 +46,21 @@ body {
     height: 100px;
     background-size: contain;
     background-repeat: no-repeat;
-    opacity: 0.3;
+    opacity: 0.2;
     pointer-events: none;
-    z-index: -1;
+    z-index: 9999;
 }
 
 .container::before {
     top: 10px;
     left: 10px;
-    background-image: url('assets/tl.png');
+    background-image: url('../assets/tl.png');
 }
 
 .container::after {
     top: 10px;
     right: 10px;
-    background-image: url('assets/tr.png');
+    background-image: url('../assets/tr.png');
 }
 
 body::before,
@@ -71,21 +71,21 @@ body::after {
     height: 100px;
     background-size: contain;
     background-repeat: no-repeat;
-    opacity: 0.3;
+    opacity: 0.2;
     pointer-events: none;
-    z-index: -1;
+    z-index: 9999;
 }
 
 body::before {
     bottom: 10px;
     left: 10px;
-    background-image: url('assets/bl.png');
+    background-image: url('../assets/bl.png');
 }
 
 body::after {
     bottom: 10px;
     right: 10px;
-    background-image: url('assets/br.png');
+    background-image: url('../assets/br.png');
 }
 
 /* Header */
@@ -118,11 +118,6 @@ h2 {
 .section {
     margin-bottom: 32px;
     padding-bottom: 24px;
-    border-bottom: 1px solid var(--border);
-}
-
-.section:last-child {
-    border-bottom: none;
 }
 
 /* Settings Rows */
@@ -219,32 +214,8 @@ input[type="checkbox"], input[type="radio"] {
     border-radius: 18px;
 }
 
-/* Button color variations */
-#play-btn, #step-forward-btn, #replay-last-btn {
-    border-color: var(--secondary);
-    background: var(--secondary);
-}
-
-#play-btn:hover:not(:disabled),
-#step-forward-btn:hover:not(:disabled),
-#replay-last-btn:hover:not(:disabled) {
-    background: #c5d9cd;
-    border-color: #c5d9cd;
-}
-
-#pause-btn {
-    border-color: var(--highlight);
-    background: var(--highlight);
-}
-
-#pause-btn:hover:not(:disabled) {
-    background: #f5cec3;
-    border-color: #f5cec3;
-}
-
-#restart-btn {
-    border-color: var(--accent);
-}
+/* Button color variations - REMOVED for handdrawn buttons */
+/* Using handdrawn images instead, no need for CSS colors */
 
 /* Checkbox and Radio Groups */
 .checkbox-group, .radio-group {
@@ -351,11 +322,11 @@ input[type="checkbox"], input[type="radio"] {
 }
 
 .note-circle {
-    width: 60px;
-    height: 60px;
-    border: none;  /* Removed - using handdrawn images */
-    border-radius: 0;  /* Removed - images have their own shape */
-    background: transparent;  /* Removed - using handdrawn images */
+    width: 90px;
+    height: 90px;
+    border: none;
+    border-radius: 0;
+    background: transparent;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -364,18 +335,20 @@ input[type="checkbox"], input[type="radio"] {
     z-index: 1;
     transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
-    box-shadow: none;  /* Removed - using handdrawn images */
+    box-shadow: none;
 }
 
 .note-number {
-    font-size: 1.2em;
+    font-size: 1em;
     color: var(--text);
+    line-height: 1;
 }
 
 .note-name {
-    font-size: 0.7em;
+    font-size: 0.65em;
     color: var(--text-subtle);
-    margin-top: 2px;
+    margin-top: 4px;
+    line-height: 1;
 }
 
 .note-circle.active {
@@ -428,8 +401,9 @@ input[type="checkbox"], input[type="radio"] {
 .playback-controls {
     display: flex;
     gap: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     margin-bottom: 16px;
+    justify-content: flex-start;
 }
 
 .loop-indicator {
@@ -702,13 +676,12 @@ details[open] summary {
 /* Generic button border for all other buttons */
 .btn:not(#play-btn):not(#pause-btn):not(#restart-btn):not(.btn-small) {
     background-image: url('../assets/button-border.png');
-    background-size: contain;
+    background-size: 100% 100%;
     background-repeat: no-repeat;
     background-position: center;
-    min-width: 120px;
-    min-height: 60px;
-    max-height: 60px;
-    padding: 12px 24px;
+    min-height: 50px;
+    max-height: 50px;
+    padding: 10px 28px;
     flex-shrink: 0;
 }
 
@@ -745,13 +718,7 @@ details[open] summary {
     background-image: url('../assets/note-circle-active.png');
 }
 
-/* Pattern Input Boxes */
-.pattern-box {
-    background-image: url('../assets/pattern-box.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: center;
-}
+/* Pattern Input Boxes - styles defined earlier in file */
 
 /* Notebook Paper Background for Pattern Display */
 /* COMMENTED OUT - User doesn't like this idea
@@ -765,22 +732,29 @@ details[open] summary {
 /* Handwritten Digits */
 .handwritten-digit {
     display: inline-block;
-    width: 20px;
-    height: 25px;
+    width: 16px;
+    height: 20px;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
 }
 
-/* Larger digits for pattern display and current note */
+/* Larger digits for pattern display */
 .pattern-text .handwritten-digit {
     width: 40px;
     height: 50px;
 }
 
+/* Larger digits for current note display */
 .current-note-display .handwritten-digit {
     width: 60px;
     height: 75px;
+}
+
+/* Digits in pakad phrases */
+.pakad-pattern .handwritten-digit {
+    width: 32px;
+    height: 40px;
 }
 
 .handwritten-digit[data-digit="0"] { background-image: url('../assets/digit-0.png'); }
