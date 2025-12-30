@@ -404,6 +404,15 @@ input[type="checkbox"], input[type="radio"] {
     margin-bottom: 16px;
 }
 
+.loop-indicator {
+    text-align: center;
+    font-size: 0.9em;
+    color: var(--text-subtle);
+    margin-bottom: 16px;
+    font-family: 'Patrick Hand', cursive;
+    min-height: 24px;
+}
+
 /* Details/Summary */
 details {
     cursor: pointer;

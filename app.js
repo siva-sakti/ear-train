@@ -71,6 +71,8 @@ let isPlaying = false;
 let currentNoteIndex = 0;
 let playbackTimeout = null;
 let lastNote = null;
+let currentLoop = 1;
+let totalLoops = 1;
 
 // ===== DOM ELEMENTS =====
 const elements = {
@@ -107,6 +109,7 @@ const elements = {
     playBtn: document.getElementById('play-btn'),
     pauseBtn: document.getElementById('pause-btn'),
     restartBtn: document.getElementById('restart-btn'),
+    loopIndicator: document.getElementById('loop-indicator'),
 
     // Advanced controls
     noteDuration: document.getElementById('note-duration'),
@@ -243,9 +246,91 @@ function generatePedagogicalPattern() {
 }
 
 function generateRandomPattern() {
-    // TODO: Implement random pattern generation with interval constraints
-    // For now, fall back to pedagogical
-    generatePedagogicalPattern();
+    const scaleLength = getScaleLength(currentScale);
+    const templateLengths = PATTERN_TEMPLATES[currentDifficulty].map(t => t.length);
+    const minLength = Math.min(...templateLengths);
+    const maxLength = Math.max(...templateLengths);
+    const patternLength = minLength + Math.floor(Math.random() * (maxLength - minLength + 1));
+
+    // Interval constraints based on difficulty
+    const intervalRules = {
+        easy: { max: 2, preferredMax: 1 },      // Stepwise (seconds), occasionally a third
+        medium: { max: 5, preferredMax: 3 },    // Up to fourths, occasionally a fifth
+        hard: { max: 7, preferredMax: 7 }       // Any interval up to octave
+    };
+
+    const rules = intervalRules[currentDifficulty];
+    const pattern = [];
+
+    // Start with note 1 (most common) or occasionally 3 or 5
+    const startNotes = [1, 1, 1, 3, 5];
+    let currentNote = startNotes[Math.floor(Math.random() * startNotes.length)];
+    pattern.push(currentNote);
+
+    let lastInterval = 0;
+    let direction = null; // 'up', 'down', or null
+
+    for (let i = 1; i < patternLength; i++) {
+        const isLastNote = (i === patternLength - 1);
+        let nextNote;
+        let attempts = 0;
+        const maxAttempts = 50;
+
+        do {
+            attempts++;
+            if (attempts > maxAttempts) {
+                // Fallback: stepwise motion toward 1
+                nextNote = currentNote > 1 ? currentNote - 1 : currentNote + 1;
+                break;
+            }
+
+            // Melodic rule: After a large leap, prefer stepwise return
+            if (Math.abs(lastInterval) >= 4) {
+                // Move stepwise in opposite direction
+                const returnDirection = lastInterval > 0 ? -1 : 1;
+                nextNote = currentNote + returnDirection * (Math.random() < 0.8 ? 1 : 2);
+            }
+            // Melodic rule: Tend to resolve to 1 on the last note
+            else if (isLastNote && pattern.length > 2) {
+                if (Math.random() < 0.7) {
+                    nextNote = 1; // Strong tendency to end on tonic
+                } else {
+                    // Or approach stepwise
+                    nextNote = currentNote > 1 ? currentNote - 1 : currentNote + 1;
+                }
+            }
+            // Normal random interval generation
+            else {
+                // Determine interval size (prefer smaller intervals 70% of the time)
+                const maxInterval = Math.random() < 0.7 ? rules.preferredMax : rules.max;
+                const interval = Math.floor(Math.random() * (maxInterval + 1));
+
+                // Melodic rule: Prefer changing direction after continued motion
+                let newDirection;
+                if (direction && Math.random() < 0.4) {
+                    // 40% chance to change direction
+                    newDirection = direction === 'up' ? 'down' : 'up';
+                } else {
+                    newDirection = Math.random() < 0.5 ? 'up' : 'down';
+                }
+
+                nextNote = newDirection === 'up'
+                    ? currentNote + interval
+                    : currentNote - interval;
+            }
+
+            // Ensure note is within scale bounds
+            nextNote = Math.max(1, Math.min(scaleLength, nextNote));
+
+        } while (nextNote === currentNote); // Avoid repeated notes (unisons)
+
+        pattern.push(nextNote);
+        lastInterval = nextNote - currentNote;
+        direction = lastInterval > 0 ? 'up' : 'down';
+        currentNote = nextNote;
+    }
+
+    currentPattern = pattern;
 }
 
 // ===== CUSTOM PATTERN =====
@@ -679,18 +764,41 @@ async function playPattern() {
     isPlaying = true;
     currentNoteIndex = 0;
 
+    // Initialize loop tracking
+    totalLoops = parseInt(elements.loopCount.value) || 1;
+    currentLoop = 1;
+
     elements.playBtn.disabled = true;
     elements.pauseBtn.disabled = false;
     elements.restartBtn.disabled = false;
     elements.generateBtn.disabled = true;
 
+    updateLoopIndicator();
     await playNextNote();
 }
 
 async function playNextNote() {
-    if (!isPlaying || currentNoteIndex >= currentPattern.length) {
+    if (!isPlaying) {
         finishPlayback();
         return;
+    }
+
+    // Check if pattern is complete
+    if (currentNoteIndex >= currentPattern.length) {
+        // Check if we should loop again
+        if (currentLoop < totalLoops) {
+            currentLoop++;
+            currentNoteIndex = 0;
+            updateLoopIndicator();
+
+            // Small gap before next loop
+            playbackTimeout = setTimeout(() => playNextNote(), 500);
+            return;
+        } else {
+            // All loops complete
+            finishPlayback();
+            return;
+        }
     }
 
     const note = currentPattern[currentNoteIndex];
@@ -753,11 +861,21 @@ function resetPlaybackState() {
 
     isPlaying = false;
     currentNoteIndex = 0;
+    currentLoop = 1;
 
     elements.playBtn.textContent = 'Play';
     elements.pauseBtn.disabled = true;
 
     highlightNote(-1);
+    elements.loopIndicator.textContent = '';
+}
+
+function updateLoopIndicator() {
+    if (totalLoops > 1) {
+        elements.loopIndicator.textContent = `Loop ${currentLoop} of ${totalLoops}`;
+    } else {
+        elements.loopIndicator.textContent = '';
+    }
 }
 
 function enablePlaybackControls() {
