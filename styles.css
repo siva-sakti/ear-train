@@ -640,25 +640,27 @@ details[open] summary {
 }
 
 /* Handdrawn Buttons - Play/Pause/Restart */
-#play-btn {
-    background-image: url('../assets/play-button.png');
+/* Text is hidden because it's drawn into the button images */
+#play-btn,
+#pause-btn,
+#restart-btn {
     background-size: 100% 100%;
     background-repeat: no-repeat;
     background-position: center;
+    color: transparent;  /* Hide text since it's in the image */
+    text-indent: -9999px;  /* Extra hiding for screen readers */
+}
+
+#play-btn {
+    background-image: url('../assets/play-button.png');
 }
 
 #pause-btn {
     background-image: url('../assets/pause-button.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: center;
 }
 
 #restart-btn {
     background-image: url('../assets/restart-button.png');
-    background-size: 100% 100%;
-    background-repeat: no-repeat;
-    background-position: center;
 }
 
 /* Generic button border for all other buttons */
@@ -697,11 +699,13 @@ details[open] summary {
 }
 
 /* Notebook Paper Background for Pattern Display */
+/* COMMENTED OUT - User doesn't like this idea
 .pattern-display {
     background-image: url('../assets/notebook-paper.png');
     background-repeat: repeat;
     background-size: auto 40px;
 }
+*/
 
 /* Optional: Handwritten Digits (if you create them) */
 .handwritten-digit {
