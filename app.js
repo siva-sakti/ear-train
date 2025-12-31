@@ -27,7 +27,8 @@ console.log(`🔴 APP VERSION LOADING: ${APP_VERSION}`);
     const showVersionBanner = () => {
         const banner = document.createElement('div');
         banner.id = 'version-banner';
-        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:15px;z-index:99999;text-align:center;font-size:18px;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.3);';
+        // Lower z-index so audio unlock banner can show above it
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:15px;z-index:999;text-align:center;font-size:18px;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.3);';
         banner.innerHTML = `🔴 VERSION: ${APP_VERSION} 🔴`;
         document.body.insertBefore(banner, document.body.firstChild);
         console.log('✅ Version banner created');
