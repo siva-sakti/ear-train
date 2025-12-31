@@ -145,6 +145,12 @@ function setupMobileAudioUnlock() {
     // On mobile browsers, audio context starts suspended and requires user interaction
     // This function sets up a one-time event listener to resume the context
 
+    // DEBUG: Change subtitle to show this function ran
+    const subtitle = document.querySelector('.subtitle');
+    if (subtitle) {
+        subtitle.textContent = 'DEBUG: setupMobileAudioUnlock() is running!';
+    }
+
     let unlocked = false;
     const banner = document.getElementById('audio-unlock-banner');
 
@@ -159,7 +165,15 @@ function setupMobileAudioUnlock() {
     // Force show banner to test (remove isMobile check temporarily)
     if (banner) {
         banner.style.display = 'block';
-        banner.querySelector('p').textContent = `Tap to enable audio (Mobile: ${isMobile})`;
+        const bannerP = banner.querySelector('p');
+        if (bannerP) {
+            bannerP.textContent = `Tap to enable audio (Mobile: ${isMobile})`;
+        }
+    } else {
+        // If banner doesn't exist, show in subtitle
+        if (subtitle) {
+            subtitle.textContent = 'ERROR: Banner element not found!';
+        }
     }
 
     const unlockAudio = async () => {
