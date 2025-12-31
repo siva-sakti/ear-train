@@ -1,46 +1,5 @@
 // Ear Training App - Main Application Logic
 
-// ===== VERSION BANNER (DEBUGGING) =====
-const APP_VERSION = '2025-12-30-MOBILE-DEBUG-v4';
-console.log(`🔴 APP VERSION LOADING: ${APP_VERSION}`);
-
-// Proof that JS is executing - hide the orange warning
-(function() {
-    const hideWarning = () => {
-        const warning = document.getElementById('js-load-status');
-        if (warning) {
-            warning.style.background = 'green';
-            warning.style.color = 'white';
-            warning.innerHTML = `✅ JavaScript loaded! Version: ${APP_VERSION}`;
-        }
-    };
-
-    if (document.getElementById('js-load-status')) {
-        hideWarning();
-    } else {
-        document.addEventListener('DOMContentLoaded', hideWarning);
-    }
-})();
-
-// Create version banner IMMEDIATELY (before DOMContentLoaded)
-(function() {
-    const showVersionBanner = () => {
-        const banner = document.createElement('div');
-        banner.id = 'version-banner';
-        // Lower z-index so audio unlock banner can show above it
-        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:15px;z-index:999;text-align:center;font-size:18px;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.3);';
-        banner.innerHTML = `🔴 VERSION: ${APP_VERSION} 🔴`;
-        document.body.insertBefore(banner, document.body.firstChild);
-        console.log('✅ Version banner created');
-    };
-
-    if (document.body) {
-        showVersionBanner();
-    } else {
-        document.addEventListener('DOMContentLoaded', showVersionBanner);
-    }
-})();
-
 // ===== CONFIGURATION =====
 const BASE_FREQUENCY = 261.63; // Middle C (C4)
 
@@ -184,58 +143,25 @@ const elements = {
 // ===== MOBILE AUDIO UNLOCK =====
 function setupMobileAudioUnlock() {
     // On mobile browsers, audio context starts suspended and requires user interaction
-    // This function sets up a one-time event listener to resume the context
-
-    // EXTREME DEBUG: Alert to confirm function runs
-    alert('setupMobileAudioUnlock() called!');
-
-    // DEBUG: Change subtitle to show this function ran
-    const subtitle = document.querySelector('.subtitle');
-    if (subtitle) {
-        subtitle.textContent = 'DEBUG: setupMobileAudioUnlock() is running!';
-    }
-
     let unlocked = false;
     const banner = document.getElementById('audio-unlock-banner');
 
     // Detect mobile device
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    // Debug: Always show banner for now to test
-    console.log('Mobile detection:', isMobile);
-    console.log('User agent:', navigator.userAgent);
-    console.log('Banner element:', banner);
-
-    // Force show banner to test (remove isMobile check temporarily)
-    if (banner) {
+    // Show banner on mobile devices
+    if (isMobile && banner) {
         banner.style.display = 'block';
-        const bannerP = banner.querySelector('p');
-        if (bannerP) {
-            bannerP.textContent = `Tap to enable audio (Mobile: ${isMobile})`;
-        }
-    } else {
-        // If banner doesn't exist, show in subtitle
-        if (subtitle) {
-            subtitle.textContent = 'ERROR: Banner element not found!';
-        }
     }
 
     const unlockAudio = async () => {
         if (unlocked) return;
 
         if (audioEngine && audioEngine.audioContext) {
-            console.log('Attempting to unlock audio context...');
-            console.log('Audio context state before:', audioEngine.audioContext.state);
-
-            if (banner) {
-                banner.querySelector('p').textContent = `Unlocking... (State: ${audioEngine.audioContext.state})`;
-            }
-
             // Resume the context
             await audioEngine.resumeContext();
 
             // Play a silent sound to fully unlock audio on iOS/Android
-            // This is required because some mobile browsers need actual audio to play
             try {
                 const ctx = audioEngine.audioContext;
                 const now = ctx.currentTime;
@@ -243,41 +169,29 @@ function setupMobileAudioUnlock() {
                 const oscillator = ctx.createOscillator();
                 const gainNode = ctx.createGain();
 
-                gainNode.gain.value = 0.001; // Nearly silent but not zero
+                gainNode.gain.value = 0.001;
                 oscillator.connect(gainNode);
                 gainNode.connect(ctx.destination);
 
-                // CRITICAL FIX: Use currentTime + offset, NOT 0
-                // iOS Safari ignores start(0) because it means "start at time 0" (in the past)
                 oscillator.start(now + 0.001);
                 oscillator.stop(now + 0.002);
 
-                console.log('Silent unlock sound scheduled');
-
-                // Wait for the sound to finish
                 await new Promise(resolve => setTimeout(resolve, 50));
 
             } catch (e) {
-                console.error('Error playing unlock sound:', e);
-                if (banner) {
-                    banner.querySelector('p').textContent = `Error: ${e.message}`;
-                }
+                console.error('Error unlocking audio:', e);
             }
 
-            console.log('Audio context state after:', audioEngine.audioContext.state);
             unlocked = true;
 
-            // Update banner
+            // Update status indicator
+            updateAudioStatus();
+
+            // Hide banner
             if (banner) {
-                banner.querySelector('p').textContent = `Audio unlocked! (State: ${audioEngine.audioContext.state})`;
                 setTimeout(() => {
                     banner.style.display = 'none';
-                }, 2000);
-            }
-        } else {
-            console.error('AudioEngine not initialized!');
-            if (banner) {
-                banner.querySelector('p').textContent = 'Error: Audio engine not ready';
+                }, 1500);
             }
         }
 
@@ -293,79 +207,57 @@ function setupMobileAudioUnlock() {
     document.addEventListener('click', unlockAudio, { once: true });
 }
 
-// ===== DIRECT AUDIO TEST (DEBUGGING) =====
-function setupAudioTest() {
-    const testBtn = document.getElementById('test-audio-btn');
-    const testStatus = document.getElementById('test-audio-status');
+// ===== AUDIO HELP & STATUS =====
+function setupAudioHelp() {
+    const helpIcon = document.getElementById('audio-help-icon');
+    const helpTooltip = document.getElementById('audio-help-tooltip');
+    const helpClose = helpTooltip?.querySelector('.help-close');
 
-    if (!testBtn || !testStatus) return;
+    if (!helpIcon || !helpTooltip) return;
 
-    let testContext = null;
+    // Toggle tooltip on click
+    helpIcon.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isVisible = helpTooltip.style.display === 'block';
+        helpTooltip.style.display = isVisible ? 'none' : 'block';
+    });
 
-    testBtn.addEventListener('click', async () => {
-        let log = '';
-        const addLog = (msg) => {
-            log += msg + '\n';
-            testStatus.textContent = log;
-            console.log('[AUDIO TEST]', msg);
-        };
+    // Close button
+    if (helpClose) {
+        helpClose.addEventListener('click', () => {
+            helpTooltip.style.display = 'none';
+        });
+    }
 
-        try {
-            addLog('=== DIRECT AUDIO TEST STARTED ===');
-            addLog('User agent: ' + navigator.userAgent);
-
-            // Create fresh AudioContext
-            if (!testContext) {
-                testContext = new (window.AudioContext || window.webkitAudioContext)();
-                addLog('✓ AudioContext created');
-            }
-
-            addLog('AudioContext state: ' + testContext.state);
-
-            // Resume if needed
-            if (testContext.state === 'suspended') {
-                addLog('Resuming context...');
-                await testContext.resume();
-                addLog('Context resumed, new state: ' + testContext.state);
-                await new Promise(r => setTimeout(r, 50));
-            }
-
-            // Create and play a simple tone
-            addLog('Creating oscillator...');
-            const now = testContext.currentTime;
-            const osc = testContext.createOscillator();
-            const gain = testContext.createGain();
-
-            osc.type = 'sine';
-            osc.frequency.value = 440; // A4 note
-            gain.gain.value = 0.3;
-
-            osc.connect(gain);
-            gain.connect(testContext.destination);
-
-            addLog('Starting oscillator at time: ' + (now + 0.001));
-            osc.start(now + 0.001);
-            osc.stop(now + 1.001); // Play for 1 second
-
-            addLog('✓ Oscillator scheduled to play');
-            addLog('✓ You should hear a tone now!');
-            addLog('If you hear nothing, check:');
-            addLog('  - Is phone in silent mode?');
-            addLog('  - Is volume up?');
-            addLog('  - Try headphones?');
-
-        } catch (error) {
-            addLog('❌ ERROR: ' + error.message);
-            addLog('Stack: ' + error.stack);
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!helpTooltip.contains(e.target) && !helpIcon.contains(e.target)) {
+            helpTooltip.style.display = 'none';
         }
     });
 }
 
+function updateAudioStatus() {
+    const statusIndicator = document.getElementById('audio-status-indicator');
+    if (!statusIndicator || !audioEngine?.audioContext) return;
+
+    const state = audioEngine.audioContext.state;
+
+    // Remove all state classes
+    statusIndicator.classList.remove('ready', 'suspended', 'error');
+
+    // Add current state class
+    if (state === 'running') {
+        statusIndicator.classList.add('ready');
+    } else if (state === 'suspended') {
+        statusIndicator.classList.add('suspended');
+    } else {
+        statusIndicator.classList.add('error');
+    }
+}
+
 // ===== INITIALIZATION =====
 function init() {
-    // EXTREME DEBUG
-    alert('init() called!');
-
     // Initialize enhanced audio engine
     audioEngine = new AudioEngine();
     audioEngine.initialize();
@@ -373,8 +265,12 @@ function init() {
     // Mobile audio unlock - resume context on first user interaction
     setupMobileAudioUnlock();
 
-    // Set up audio test button
-    setupAudioTest();
+    // Set up audio help and status
+    setupAudioHelp();
+    updateAudioStatus();
+
+    // Update status periodically
+    setInterval(updateAudioStatus, 2000);
 
     // Set up event listeners
     setupEventListeners();
@@ -391,19 +287,8 @@ function init() {
     // Load saved instrument preference
     loadInstrumentPreference();
 
-    // Unregister any existing service workers (temporary for debugging)
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for(let registration of registrations) {
-                registration.unregister();
-                console.log('Unregistered service worker for debugging');
-            }
-        });
-    }
-
     // Register service worker for PWA support
-    // TEMPORARILY DISABLED to debug mobile audio
-    if (false && 'serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js')
             .then((registration) => {
                 console.log('Service Worker registered:', registration);
@@ -1073,28 +958,21 @@ function getIntervalName(steps) {
 
 // ===== AUDIO PLAYBACK =====
 async function playNote(noteNumber, duration = 0.5) {
-    console.log(`🎵 playNote called: note=${noteNumber}, duration=${duration}`);
-
     // Check if sound should play
     const shouldPlaySound = practiceMode === 'listen' || practiceMode === 'self-paced';
-    console.log(`shouldPlaySound=${shouldPlaySound}, practiceMode=${practiceMode}`);
 
     if (!shouldPlaySound) {
-        console.log('⚠️ Skipping sound - practice mode is test');
         return;
     }
     if (!audioEngine) {
-        console.log('❌ audioEngine is null!');
         return;
     }
 
     const scale = SCALE_LIBRARY[currentScale];
     const frequency = BASE_FREQUENCY * scale.ratios[noteNumber - 1];
-    console.log(`Frequency: ${frequency}Hz, AudioContext state: ${audioEngine.audioContext?.state}`);
 
     // Use the enhanced audio engine
     await audioEngine.playNote(frequency, duration);
-    console.log(`✅ playNote completed`);
 }
 
 async function playPattern() {

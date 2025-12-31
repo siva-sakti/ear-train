@@ -955,3 +955,151 @@ body::after {
 .pakad-item .btn {
     flex-shrink: 0;
 }
+
+/* ===== AUDIO STATUS & HELP BELOW HEADER ===== */
+.audio-controls-below-header {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 12px;
+    margin-bottom: 24px;
+}
+
+.audio-status-indicator {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.6;
+}
+
+.status-icon {
+    display: block;
+}
+
+.status-circle {
+    stroke: var(--text-subtle);
+    stroke-width: 1;
+    fill: var(--text-subtle);
+    transition: all 0.3s ease;
+}
+
+/* Status states */
+.audio-status-indicator.ready .status-circle {
+    fill: #A8C5A7;
+    stroke: #A8C5A7;
+}
+
+.audio-status-indicator.suspended .status-circle {
+    fill: #E8C48F;
+    stroke: #E8C48F;
+}
+
+.audio-status-indicator.error .status-circle {
+    fill: var(--text-subtle);
+    stroke: var(--text-subtle);
+}
+
+.audio-help-icon {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.audio-help-icon:hover {
+    opacity: 0.8;
+}
+
+.help-icon {
+    color: var(--text-subtle);
+}
+
+/* Help tooltip */
+.audio-help-tooltip {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    max-width: 280px;
+    font-family: 'Crimson Pro', serif;
+    z-index: 100;
+}
+
+.help-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    cursor: pointer;
+    font-size: 1.5em;
+    color: var(--text-subtle);
+    line-height: 1;
+    opacity: 0.6;
+}
+
+.help-close:hover {
+    opacity: 1;
+}
+
+.help-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+}
+
+.help-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.help-tip {
+    color: var(--text);
+    font-size: 0.95em;
+    padding-left: 16px;
+    position: relative;
+}
+
+.help-tip::before {
+    content: '·';
+    position: absolute;
+    left: 4px;
+    font-size: 1.5em;
+    line-height: 0.6;
+}
+
+.help-tip-sub {
+    color: var(--text-subtle);
+    font-size: 0.85em;
+    padding-left: 16px;
+    margin-top: -6px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    /* Hide status indicator on mobile - it's not accurate when ringer is off */
+    .audio-status-indicator {
+        display: none;
+    }
+
+    .audio-help-tooltip {
+        left: 16px;
+        right: 16px;
+        transform: none;
+        max-width: none;
+    }
+}
