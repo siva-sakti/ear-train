@@ -162,8 +162,7 @@ function init() {
     loadInstrumentPreference();
 
     // Register service worker for PWA support
-    // TEMPORARILY DISABLED FOR DEVELOPMENT - WILL RE-ENABLE LATER
-    if (false && 'serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js')
             .then((registration) => {
                 console.log('Service Worker registered:', registration);
