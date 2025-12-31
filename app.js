@@ -261,8 +261,19 @@ function init() {
     // Load saved instrument preference
     loadInstrumentPreference();
 
-    // Register service worker for PWA support
+    // Unregister any existing service workers (temporary for debugging)
     if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                registration.unregister();
+                console.log('Unregistered service worker for debugging');
+            }
+        });
+    }
+
+    // Register service worker for PWA support
+    // TEMPORARILY DISABLED to debug mobile audio
+    if (false && 'serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js')
             .then((registration) => {
                 console.log('Service Worker registered:', registration);
