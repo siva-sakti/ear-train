@@ -26,6 +26,8 @@ class AudioEngine {
     async resumeContext() {
         if (this.audioContext && this.audioContext.state === 'suspended') {
             await this.audioContext.resume();
+            // Give mobile browsers a moment to actually resume
+            await new Promise(resolve => setTimeout(resolve, 10));
         }
     }
 
@@ -112,8 +114,9 @@ const INSTRUMENTS = {
                 osc.connect(gainNode);
                 gainNode.connect(destination);
 
-                osc.start(now);
-                osc.stop(now + duration);
+                // Mobile fix: Use currentTime + small offset instead of currentTime
+                osc.start(now + 0.001);
+                osc.stop(now + duration + 0.001);
             });
         }
     },
@@ -155,8 +158,9 @@ const INSTRUMENTS = {
                 osc.connect(gainNode);
                 gainNode.connect(destination);
 
-                osc.start(now);
-                osc.stop(now + duration);
+                // Mobile fix: Use currentTime + small offset instead of currentTime
+                osc.start(now + 0.001);
+                osc.stop(now + duration + 0.001);
             });
         }
     },
@@ -198,8 +202,9 @@ const INSTRUMENTS = {
                 osc.connect(gainNode);
                 gainNode.connect(destination);
 
-                osc.start(now);
-                osc.stop(now + duration);
+                // Mobile fix: Use currentTime + small offset instead of currentTime
+                osc.start(now + 0.001);
+                osc.stop(now + duration + 0.001);
             });
         }
     },
@@ -264,8 +269,9 @@ const INSTRUMENTS = {
                 osc.connect(gainNode);
                 gainNode.connect(destination);
 
-                osc.start(now);
-                osc.stop(now + duration);
+                // Mobile fix: Use currentTime + small offset instead of currentTime
+                osc.start(now + 0.001);
+                osc.stop(now + duration + 0.001);
             });
         }
     },
@@ -313,8 +319,9 @@ const INSTRUMENTS = {
                 filter.connect(gainNode);
                 gainNode.connect(destination);
 
-                osc.start(now);
-                osc.stop(now + duration);
+                // Mobile fix: Use currentTime + small offset instead of currentTime
+                osc.start(now + 0.001);
+                osc.stop(now + duration + 0.001);
             });
         }
     },
@@ -356,8 +363,9 @@ const INSTRUMENTS = {
                 osc.connect(gainNode);
                 gainNode.connect(destination);
 
-                osc.start(now);
-                osc.stop(now + duration);
+                // Mobile fix: Use currentTime + small offset instead of currentTime
+                osc.start(now + 0.001);
+                osc.stop(now + duration + 0.001);
             });
         }
     },
@@ -385,8 +393,9 @@ const INSTRUMENTS = {
             osc.connect(gainNode);
             gainNode.connect(destination);
 
-            osc.start(now);
-            osc.stop(now + duration);
+            // Mobile fix: Use currentTime + small offset instead of currentTime
+            osc.start(now + 0.001);
+            osc.stop(now + duration + 0.001);
         }
     },
 
@@ -421,8 +430,9 @@ const INSTRUMENTS = {
                 osc.connect(gainNode);
                 gainNode.connect(destination);
 
-                osc.start(now);
-                osc.stop(now + duration * 1.5);
+                // Mobile fix: Use currentTime + small offset instead of currentTime
+                osc.start(now + 0.001);
+                osc.stop(now + duration * 1.5 + 0.001);
             });
         }
     }

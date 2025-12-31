@@ -237,14 +237,26 @@ function setupMobileAudioUnlock() {
             // Play a silent sound to fully unlock audio on iOS/Android
             // This is required because some mobile browsers need actual audio to play
             try {
-                const oscillator = audioEngine.audioContext.createOscillator();
-                const gainNode = audioEngine.audioContext.createGain();
-                gainNode.gain.value = 0; // Silent
+                const ctx = audioEngine.audioContext;
+                const now = ctx.currentTime;
+
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+
+                gainNode.gain.value = 0.001; // Nearly silent but not zero
                 oscillator.connect(gainNode);
-                gainNode.connect(audioEngine.audioContext.destination);
-                oscillator.start(0);
-                oscillator.stop(audioEngine.audioContext.currentTime + 0.001);
-                console.log('Silent unlock sound played');
+                gainNode.connect(ctx.destination);
+
+                // CRITICAL FIX: Use currentTime + offset, NOT 0
+                // iOS Safari ignores start(0) because it means "start at time 0" (in the past)
+                oscillator.start(now + 0.001);
+                oscillator.stop(now + 0.002);
+
+                console.log('Silent unlock sound scheduled');
+
+                // Wait for the sound to finish
+                await new Promise(resolve => setTimeout(resolve, 50));
+
             } catch (e) {
                 console.error('Error playing unlock sound:', e);
                 if (banner) {
