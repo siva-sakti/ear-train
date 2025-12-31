@@ -36,6 +36,12 @@
             <p class="subtitle">Practice so that we may sing praise to Your name!</p>
         </header>
 
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+            <button id="training-mode-btn" class="mode-btn active" data-mode="training">Training Mode</button>
+            <button id="guessing-mode-btn" class="mode-btn" data-mode="guessing">Guessing Mode</button>
+        </div>
+
         <!-- Audio status and help -->
         <div class="audio-controls-below-header">
             <!-- Audio status indicator (desktop only) -->
@@ -67,7 +73,8 @@
             </div>
         </div>
 
-        <main>
+        <!-- Training Mode Container -->
+        <main id="training-mode-container">
             <!-- Pattern Generation Settings -->
             <section class="section">
                 <h2>Pattern Settings</h2>
@@ -340,10 +347,120 @@
                 </details>
             </section>
         </main>
+
+        <!-- Guessing Mode Container (hidden by default) -->
+        <div id="guessing-mode-container" style="display: none;">
+
+            <!-- Guessing Sub-Mode Toggle -->
+            <div class="guessing-toggle">
+                <button id="guess-note-btn" class="guess-type-btn active" data-type="note">Guess the Note</button>
+                <button id="guess-interval-btn" class="guess-type-btn" data-type="interval">Guess the Interval</button>
+            </div>
+
+            <!-- Guess Note Mode -->
+            <div id="guess-note-mode" class="guess-mode-section">
+                <section class="section">
+                    <h2>Note Guessing</h2>
+                    <p class="info-text">Listen to a single note and identify which scale degree it is (1-7)</p>
+
+                    <button id="play-mystery-note" class="btn btn-primary" style="display: block; margin: 24px auto;">Play Mystery Note</button>
+
+                    <div class="guess-options">
+                        <div class="note-buttons">
+                            <button class="note-guess-btn" data-note="1">
+                                <img src="assets/digit-1.png" alt="1" class="note-digit">
+                            </button>
+                            <button class="note-guess-btn" data-note="2">
+                                <img src="assets/digit-2.png" alt="2" class="note-digit">
+                            </button>
+                            <button class="note-guess-btn" data-note="3">
+                                <img src="assets/digit-3.png" alt="3" class="note-digit">
+                            </button>
+                            <button class="note-guess-btn" data-note="4">
+                                <img src="assets/digit-4.png" alt="4" class="note-digit">
+                            </button>
+                            <button class="note-guess-btn" data-note="5">
+                                <img src="assets/digit-5.png" alt="5" class="note-digit">
+                            </button>
+                            <button class="note-guess-btn" data-note="6">
+                                <img src="assets/digit-6.png" alt="6" class="note-digit">
+                            </button>
+                            <button class="note-guess-btn" data-note="7">
+                                <img src="assets/digit-7.png" alt="7" class="note-digit">
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="note-feedback" class="guess-feedback"></div>
+
+                    <div class="guess-actions">
+                        <button id="reveal-note-btn" class="btn">Reveal Answer</button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Guess Interval Mode -->
+            <div id="guess-interval-mode" class="guess-mode-section" style="display: none;">
+                <section class="section">
+                    <h2>Interval Guessing</h2>
+                    <p class="info-text">Listen to two notes and identify the interval between them</p>
+
+                    <div class="guess-play-area">
+                        <button id="play-mystery-interval" class="btn btn-primary">Play Mystery Interval</button>
+                        <div class="guess-progress">
+                            <span id="interval-question-number">Question 1/10</span>
+                            <span id="interval-correct-count">Correct: 0</span>
+                        </div>
+                    </div>
+
+                    <div class="guess-options">
+                        <div class="interval-buttons">
+                            <button class="interval-guess-btn" data-interval="0">Unison</button>
+                            <button class="interval-guess-btn" data-interval="1">Minor 2nd</button>
+                            <button class="interval-guess-btn" data-interval="2">Major 2nd</button>
+                            <button class="interval-guess-btn" data-interval="3">Minor 3rd</button>
+                            <button class="interval-guess-btn" data-interval="4">Major 3rd</button>
+                            <button class="interval-guess-btn" data-interval="5">Perfect 4th</button>
+                            <button class="interval-guess-btn" data-interval="6">Tritone</button>
+                            <button class="interval-guess-btn" data-interval="7">Perfect 5th</button>
+                            <button class="interval-guess-btn" data-interval="8">Minor 6th</button>
+                            <button class="interval-guess-btn" data-interval="9">Major 6th</button>
+                            <button class="interval-guess-btn" data-interval="10">Minor 7th</button>
+                            <button class="interval-guess-btn" data-interval="11">Major 7th</button>
+                            <button class="interval-guess-btn" data-interval="12">Octave</button>
+                        </div>
+                    </div>
+
+                    <div id="interval-feedback" class="guess-feedback"></div>
+
+                    <div class="guess-actions">
+                        <button id="reveal-interval-btn" class="btn">Reveal Answer</button>
+                        <button id="next-interval-btn" class="btn" style="display: none;">Next Question</button>
+                        <button id="restart-interval-btn" class="btn" style="display: none;">Start Over</button>
+                    </div>
+                </section>
+
+                <!-- Settings -->
+                <section class="section">
+                    <details>
+                        <summary>Settings</summary>
+                        <div class="setting-row">
+                            <label for="interval-difficulty">Difficulty:</label>
+                            <select id="interval-difficulty">
+                                <option value="easy">Easy (2nds, 3rds, 4ths, 5ths)</option>
+                                <option value="medium" selected>Medium (+ 6ths, 7ths)</option>
+                                <option value="hard">Hard (All intervals)</option>
+                            </select>
+                        </div>
+                    </details>
+                </section>
+            </div>
+
+        </div>
     </div>
 
-    <script src="scales.js?v=1767151632"></script>
-    <script src="audio-engine.js?v=1767151632"></script>
-    <script src="app.js?v=1767151632"></script>
+    <script src="scales.js?v=1767163022"></script>
+    <script src="audio-engine.js?v=1767163022"></script>
+    <script src="app.js?v=1767163022"></script>
 </body>
 </html>

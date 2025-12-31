@@ -1089,6 +1089,206 @@ body::after {
     margin-top: -6px;
 }
 
+/* ===== MODE TOGGLE ===== */
+.mode-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 12px 0 16px 0;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.mode-btn {
+    padding: 10px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mode-btn:hover {
+    background: var(--highlight);
+}
+
+.mode-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+/* ===== GUESSING MODE ===== */
+.guessing-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.guess-type-btn {
+    padding: 8px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.guess-type-btn:hover {
+    background: var(--highlight);
+}
+
+.guess-type-btn.active {
+    background: var(--secondary);
+    border-color: var(--secondary);
+}
+
+.guess-play-area {
+    text-align: center;
+    padding: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 24px;
+}
+
+.guess-progress {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 16px;
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.1em;
+    color: var(--text-subtle);
+}
+
+.guess-options {
+    margin: 24px 0;
+}
+
+.note-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 16px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.note-guess-btn {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    background: url('assets/note-circle-inactive.png') no-repeat center;
+    background-size: contain;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.note-guess-btn .note-digit {
+    width: 35px;
+    height: auto;
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.note-guess-btn:hover {
+    transform: scale(1.05);
+}
+
+.note-guess-btn.selected,
+.note-guess-btn:active {
+    background-image: url('assets/note-circle-active.png');
+}
+
+.note-guess-btn.correct {
+    background-image: url('assets/note-circle-correct.png');
+}
+
+.note-guess-btn.incorrect {
+    background-image: url('assets/note-circle-incorrect.png');
+    animation: shake 0.3s;
+}
+
+.interval-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.interval-guess-btn {
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.95em;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.interval-guess-btn:hover {
+    background: var(--highlight);
+    transform: translateY(-2px);
+}
+
+.interval-guess-btn.correct {
+    background: var(--success);
+    border-color: var(--success);
+}
+
+.interval-guess-btn.incorrect {
+    background: var(--error);
+    border-color: var(--error);
+    animation: shake 0.3s;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+}
+
+.guess-feedback {
+    text-align: center;
+    padding: 16px;
+    margin: 20px 0;
+    border-radius: 6px;
+    font-size: 1.1em;
+    min-height: 60px;
+}
+
+.guess-feedback.correct {
+    background: var(--success);
+    color: var(--text);
+}
+
+.guess-feedback.incorrect {
+    background: var(--error);
+    color: var(--text);
+}
+
+.guess-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
 /* Mobile adjustments */
 @media (max-width: 600px) {
     /* Hide status indicator on mobile - it's not accurate when ringer is off */

@@ -74,6 +74,7 @@ let lastNote = null;
 let currentLoop = 1;
 let totalLoops = 1;
 let currentInstrument = 'piano'; // Default instrument
+let guessingModeInstrument = 'piano'; // Always use piano for guessing mode
 
 // ===== DOM ELEMENTS =====
 const elements = {
@@ -286,6 +287,11 @@ function init() {
 
     // Load saved instrument preference
     loadInstrumentPreference();
+
+    // Set up guessing mode
+    setupModeToggle();
+    setupGuessTypeToggle();
+    setupGuessingModeListeners();
 
     // Register service worker for PWA support
     if ('serviceWorker' in navigator) {
@@ -1513,6 +1519,393 @@ function playPakadPhrase(phrase) {
 
     playNextPakadNote();
 }
+
+// ===== GUESSING MODE =====
+let currentMode = 'training'; // 'training' or 'guessing'
+let currentGuessType = 'note'; // 'note' or 'interval'
+let guessState = {
+    note: {
+        mysteryNote: null,
+        answered: false
+    },
+    interval: {
+        currentQuestion: 1,
+        totalQuestions: 10,
+        correctCount: 0,
+        mysteryInterval: null,
+        note1: null,
+        note2: null,
+        answered: false
+    }
+};
+
+function setupModeToggle() {
+    const trainingBtn = document.getElementById('training-mode-btn');
+    const guessingBtn = document.getElementById('guessing-mode-btn');
+    const trainingContainer = document.getElementById('training-mode-container');
+    const guessingContainer = document.getElementById('guessing-mode-container');
+
+    trainingBtn.addEventListener('click', () => {
+        currentMode = 'training';
+        trainingBtn.classList.add('active');
+        guessingBtn.classList.remove('active');
+        trainingContainer.style.display = 'block';
+        guessingContainer.style.display = 'none';
+    });
+
+    guessingBtn.addEventListener('click', () => {
+        currentMode = 'guessing';
+        guessingBtn.classList.add('active');
+        trainingBtn.classList.remove('active');
+        trainingContainer.style.display = 'none';
+        guessingContainer.style.display = 'block';
+    });
+}
+
+function setupGuessTypeToggle() {
+    const guessNoteBtn = document.getElementById('guess-note-btn');
+    const guessIntervalBtn = document.getElementById('guess-interval-btn');
+    const guessNoteMode = document.getElementById('guess-note-mode');
+    const guessIntervalMode = document.getElementById('guess-interval-mode');
+
+    guessNoteBtn.addEventListener('click', () => {
+        currentGuessType = 'note';
+        guessNoteBtn.classList.add('active');
+        guessIntervalBtn.classList.remove('active');
+        guessNoteMode.style.display = 'block';
+        guessIntervalMode.style.display = 'none';
+    });
+
+    guessIntervalBtn.addEventListener('click', () => {
+        currentGuessType = 'interval';
+        guessIntervalBtn.classList.add('active');
+        guessNoteBtn.classList.remove('active');
+        guessNoteMode.style.display = 'none';
+        guessIntervalMode.style.display = 'block';
+    });
+}
+
+// Note Guessing Functions
+function playMysteryNote() {
+    console.log('playMysteryNote called!');
+    const state = guessState.note;
+
+    // Reset state for new question
+    state.mysteryNote = null;
+    state.answered = false;
+
+    // Reset UI
+    const buttons = document.querySelectorAll('.note-guess-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('correct', 'incorrect', 'selected');
+        btn.disabled = false;
+    });
+
+    const feedback = document.getElementById('note-feedback');
+    if (feedback) {
+        feedback.textContent = '';
+        feedback.className = 'guess-feedback';
+    }
+
+    const revealBtn = document.getElementById('reveal-note-btn');
+    if (revealBtn) {
+        revealBtn.style.display = 'inline-block';
+    }
+
+    // Generate random note (1-7 for major scale)
+    state.mysteryNote = Math.floor(Math.random() * 7) + 1;
+
+    console.log('Playing mystery note:', state.mysteryNote);
+
+    // Temporarily set instrument to piano for guessing mode
+    const previousInstrument = currentInstrument;
+    currentInstrument = 'piano';
+    if (audioEngine) {
+        audioEngine.setInstrument('piano');
+    }
+
+    // Small delay to ensure UI reset before playing
+    setTimeout(() => {
+        playNote(state.mysteryNote, 1.0);
+    }, 50);
+}
+
+function guessNote(guessedNote) {
+    console.log('guessNote called with:', guessedNote);
+    const state = guessState.note;
+
+    // Don't allow guessing if no note has been played
+    if (!state.mysteryNote) {
+        console.log('No mystery note - ignoring guess');
+        return;
+    }
+
+    if (state.answered) return;
+
+    state.answered = true;
+    const correct = guessedNote === state.mysteryNote;
+
+    // Update UI
+    const buttons = document.querySelectorAll('.note-guess-btn');
+    buttons.forEach(btn => {
+        const note = parseInt(btn.dataset.note);
+        if (note === state.mysteryNote) {
+            btn.classList.add('correct');
+        } else if (note === guessedNote && !correct) {
+            btn.classList.add('incorrect');
+        }
+        btn.disabled = true;
+    });
+
+    // Show feedback
+    const feedback = document.getElementById('note-feedback');
+    if (feedback) {
+        if (correct) {
+            feedback.textContent = `Correct! The note was ${state.mysteryNote}`;
+            feedback.className = 'guess-feedback correct';
+        } else {
+            feedback.textContent = `Not quite. The note was ${state.mysteryNote}, you guessed ${guessedNote}`;
+            feedback.className = 'guess-feedback incorrect';
+        }
+    }
+
+    // Hide reveal button after answering
+    const revealBtn = document.getElementById('reveal-note-btn');
+    if (revealBtn) {
+        revealBtn.style.display = 'none';
+    }
+
+    console.log('guessNote completed');
+}
+
+function revealNoteAnswer() {
+    const state = guessState.note;
+    if (state.answered || !state.mysteryNote) return;
+
+    state.answered = true;
+
+    // Highlight correct answer
+    const buttons = document.querySelectorAll('.note-guess-btn');
+    buttons.forEach(btn => {
+        const note = parseInt(btn.dataset.note);
+        if (note === state.mysteryNote) {
+            btn.classList.add('correct');
+        }
+        btn.disabled = true;
+    });
+
+    // Show feedback
+    const feedback = document.getElementById('note-feedback');
+    feedback.textContent = `The note was ${state.mysteryNote}`;
+    feedback.className = 'guess-feedback';
+
+    // Hide reveal button
+    document.getElementById('reveal-note-btn').style.display = 'none';
+}
+
+// Interval Guessing Functions
+function getIntervalDifficulty() {
+    const difficulty = document.getElementById('interval-difficulty').value;
+    const intervals = {
+        easy: [0, 1, 2, 3, 4, 5, 7], // Unison through 5th
+        medium: [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11], // All except octave
+        hard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] // All intervals
+    };
+    return intervals[difficulty] || intervals.medium;
+}
+
+async function playMysteryInterval() {
+    const state = guessState.interval;
+    if (state.answered) return;
+
+    // Get available intervals based on difficulty
+    const availableIntervals = getIntervalDifficulty();
+    state.mysteryInterval = availableIntervals[Math.floor(Math.random() * availableIntervals.length)];
+
+    // Generate two notes
+    state.note1 = Math.floor(Math.random() * 4) + 1; // Start from 1-4
+    state.note2 = state.note1 + state.mysteryInterval;
+
+    // Make sure note2 is within scale
+    if (state.note2 > 7) {
+        state.note1 = Math.max(1, 7 - state.mysteryInterval);
+        state.note2 = state.note1 + state.mysteryInterval;
+    }
+
+    // Play both notes in sequence
+    await playNote(state.note1, 0.8);
+    setTimeout(() => {
+        playNote(state.note2, 0.8);
+    }, 900);
+}
+
+function guessInterval(guessedInterval) {
+    const state = guessState.interval;
+    if (state.answered) return;
+
+    state.answered = true;
+    const correct = guessedInterval === state.mysteryInterval;
+
+    // Update UI
+    const buttons = document.querySelectorAll('.interval-guess-btn');
+    buttons.forEach(btn => {
+        const interval = parseInt(btn.dataset.interval);
+        if (interval === state.mysteryInterval) {
+            btn.classList.add('correct');
+        } else if (interval === guessedInterval && !correct) {
+            btn.classList.add('incorrect');
+        }
+        btn.disabled = true;
+    });
+
+    // Show feedback
+    const feedback = document.getElementById('interval-feedback');
+    const intervalName = INTERVAL_NAMES[state.mysteryInterval];
+    if (correct) {
+        state.correctCount++;
+        feedback.textContent = `Correct! That was a ${intervalName}`;
+        feedback.className = 'guess-feedback correct';
+    } else {
+        const guessedName = INTERVAL_NAMES[guessedInterval];
+        feedback.textContent = `Not quite. That was a ${intervalName}, you guessed ${guessedName}`;
+        feedback.className = 'guess-feedback incorrect';
+    }
+
+    // Update progress
+    document.getElementById('interval-correct-count').textContent = `Correct: ${state.correctCount}`;
+
+    // Show next button
+    document.getElementById('reveal-interval-btn').style.display = 'none';
+    if (state.currentQuestion < state.totalQuestions) {
+        document.getElementById('next-interval-btn').style.display = 'inline-block';
+    } else {
+        document.getElementById('restart-interval-btn').style.display = 'inline-block';
+        feedback.textContent += `\n\nGame Over! You got ${state.correctCount}/${state.totalQuestions} correct!`;
+    }
+}
+
+function revealIntervalAnswer() {
+    const state = guessState.interval;
+    if (state.answered || state.mysteryInterval === null) return;
+
+    state.answered = true;
+
+    // Highlight correct answer
+    const buttons = document.querySelectorAll('.interval-guess-btn');
+    buttons.forEach(btn => {
+        const interval = parseInt(btn.dataset.interval);
+        if (interval === state.mysteryInterval) {
+            btn.classList.add('correct');
+        }
+        btn.disabled = true;
+    });
+
+    // Show feedback
+    const feedback = document.getElementById('interval-feedback');
+    const intervalName = INTERVAL_NAMES[state.mysteryInterval];
+    feedback.textContent = `The interval was a ${intervalName}`;
+    feedback.className = 'guess-feedback';
+
+    // Show next button
+    document.getElementById('reveal-interval-btn').style.display = 'none';
+    if (state.currentQuestion < state.totalQuestions) {
+        document.getElementById('next-interval-btn').style.display = 'inline-block';
+    } else {
+        document.getElementById('restart-interval-btn').style.display = 'inline-block';
+    }
+}
+
+function nextIntervalQuestion() {
+    const state = guessState.interval;
+    state.currentQuestion++;
+    state.mysteryInterval = null;
+    state.note1 = null;
+    state.note2 = null;
+    state.answered = false;
+
+    // Reset UI
+    const buttons = document.querySelectorAll('.interval-guess-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('correct', 'incorrect');
+        btn.disabled = false;
+    });
+
+    document.getElementById('interval-feedback').textContent = '';
+    document.getElementById('interval-feedback').className = 'guess-feedback';
+    document.getElementById('interval-question-number').textContent = `Question ${state.currentQuestion}/${state.totalQuestions}`;
+    document.getElementById('reveal-interval-btn').style.display = 'inline-block';
+    document.getElementById('next-interval-btn').style.display = 'none';
+}
+
+function restartIntervalGame() {
+    const state = guessState.interval;
+    state.currentQuestion = 1;
+    state.correctCount = 0;
+    state.mysteryInterval = null;
+    state.note1 = null;
+    state.note2 = null;
+    state.answered = false;
+
+    // Reset UI
+    const buttons = document.querySelectorAll('.interval-guess-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('correct', 'incorrect');
+        btn.disabled = false;
+    });
+
+    document.getElementById('interval-feedback').textContent = '';
+    document.getElementById('interval-feedback').className = 'guess-feedback';
+    document.getElementById('interval-question-number').textContent = `Question ${state.currentQuestion}/${state.totalQuestions}`;
+    document.getElementById('interval-correct-count').textContent = `Correct: 0`;
+    document.getElementById('reveal-interval-btn').style.display = 'inline-block';
+    document.getElementById('next-interval-btn').style.display = 'none';
+    document.getElementById('restart-interval-btn').style.display = 'none';
+}
+
+function setupGuessingModeListeners() {
+    console.log('Setting up guessing mode listeners...');
+
+    // Note guessing
+    const playBtn = document.getElementById('play-mystery-note');
+    console.log('Play button found:', playBtn);
+    if (playBtn) {
+        playBtn.addEventListener('click', playMysteryNote);
+    }
+
+    const revealBtn = document.getElementById('reveal-note-btn');
+    if (revealBtn) {
+        revealBtn.addEventListener('click', revealNoteAnswer);
+    }
+
+    const guessButtons = document.querySelectorAll('.note-guess-btn');
+    console.log('Found guess buttons:', guessButtons.length);
+    guessButtons.forEach((btn, index) => {
+        console.log('Adding listener to button', index, btn.dataset.note);
+        btn.addEventListener('click', (e) => {
+            console.log('BUTTON CLICKED!', e.currentTarget.dataset.note);
+            const note = parseInt(e.currentTarget.dataset.note);
+            guessNote(note);
+        });
+    });
+
+    // Interval guessing
+    document.getElementById('play-mystery-interval').addEventListener('click', playMysteryInterval);
+    document.getElementById('reveal-interval-btn').addEventListener('click', revealIntervalAnswer);
+    document.getElementById('next-interval-btn').addEventListener('click', nextIntervalQuestion);
+    document.getElementById('restart-interval-btn').addEventListener('click', restartIntervalGame);
+
+    document.querySelectorAll('.interval-guess-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const interval = parseInt(e.target.dataset.interval);
+            guessInterval(interval);
+        });
+    });
+}
+
+// ===== GLOBAL ERROR HANDLER (for debugging) =====
+window.addEventListener('error', (e) => {
+    console.error('UNCAUGHT ERROR:', e.message, e.filename, e.lineno);
+});
 
 // ===== START APP =====
 document.addEventListener('DOMContentLoaded', init);
