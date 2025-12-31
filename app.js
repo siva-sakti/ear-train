@@ -73,7 +73,7 @@ let playbackTimeout = null;
 let lastNote = null;
 let currentLoop = 1;
 let totalLoops = 1;
-let currentInstrument = 'harmonium'; // Default instrument
+let currentInstrument = 'piano'; // Default instrument
 
 // ===== DOM ELEMENTS =====
 const elements = {

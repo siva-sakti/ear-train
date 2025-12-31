@@ -4,7 +4,7 @@
 class AudioEngine {
     constructor() {
         this.audioContext = null;
-        this.currentInstrument = 'harmonium';
+        this.currentInstrument = 'piano';
         this.masterGain = null;
         this.activeOscillators = [];
     }
