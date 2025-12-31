@@ -1,8 +1,26 @@
 // Ear Training App - Main Application Logic
 
 // ===== VERSION BANNER (DEBUGGING) =====
-const APP_VERSION = '2025-12-30-MOBILE-DEBUG-v3';
+const APP_VERSION = '2025-12-30-MOBILE-DEBUG-v4';
 console.log(`🔴 APP VERSION LOADING: ${APP_VERSION}`);
+
+// Proof that JS is executing - hide the orange warning
+(function() {
+    const hideWarning = () => {
+        const warning = document.getElementById('js-load-status');
+        if (warning) {
+            warning.style.background = 'green';
+            warning.style.color = 'white';
+            warning.innerHTML = `✅ JavaScript loaded! Version: ${APP_VERSION}`;
+        }
+    };
+
+    if (document.getElementById('js-load-status')) {
+        hideWarning();
+    } else {
+        document.addEventListener('DOMContentLoaded', hideWarning);
+    }
+})();
 
 // Create version banner IMMEDIATELY (before DOMContentLoaded)
 (function() {
