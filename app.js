@@ -140,11 +140,37 @@ const elements = {
     pakadPhrases: document.getElementById('pakad-phrases')
 };
 
+// ===== MOBILE AUDIO UNLOCK =====
+function setupMobileAudioUnlock() {
+    // On mobile browsers, audio context starts suspended and requires user interaction
+    // This function sets up a one-time event listener to resume the context
+
+    const unlockAudio = async () => {
+        if (audioEngine && audioEngine.audioContext) {
+            await audioEngine.resumeContext();
+            console.log('Audio context unlocked for mobile');
+        }
+
+        // Remove listeners after first interaction
+        document.removeEventListener('touchstart', unlockAudio);
+        document.removeEventListener('touchend', unlockAudio);
+        document.removeEventListener('click', unlockAudio);
+    };
+
+    // Listen for first user interaction
+    document.addEventListener('touchstart', unlockAudio);
+    document.addEventListener('touchend', unlockAudio);
+    document.addEventListener('click', unlockAudio);
+}
+
 // ===== INITIALIZATION =====
 function init() {
     // Initialize enhanced audio engine
     audioEngine = new AudioEngine();
     audioEngine.initialize();
+
+    // Mobile audio unlock - resume context on first user interaction
+    setupMobileAudioUnlock();
 
     // Set up event listeners
     setupEventListeners();
@@ -831,7 +857,7 @@ function getIntervalName(steps) {
 }
 
 // ===== AUDIO PLAYBACK =====
-function playNote(noteNumber, duration = 0.5) {
+async function playNote(noteNumber, duration = 0.5) {
     // Check if sound should play
     const shouldPlaySound = practiceMode === 'listen' || practiceMode === 'self-paced';
 
@@ -842,7 +868,7 @@ function playNote(noteNumber, duration = 0.5) {
     const frequency = BASE_FREQUENCY * scale.ratios[noteNumber - 1];
 
     // Use the enhanced audio engine
-    audioEngine.playNote(frequency, duration);
+    await audioEngine.playNote(frequency, duration);
 }
 
 async function playPattern() {

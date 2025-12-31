@@ -22,9 +22,19 @@ class AudioEngine {
         this.currentInstrument = instrumentName;
     }
 
+    // Resume audio context (required for mobile browsers)
+    async resumeContext() {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            await this.audioContext.resume();
+        }
+    }
+
     // Main method to play a note
-    playNote(frequency, duration = 0.5) {
+    async playNote(frequency, duration = 0.5) {
         if (!this.audioContext) return;
+
+        // Resume context if suspended (critical for mobile)
+        await this.resumeContext();
 
         const instrument = INSTRUMENTS[this.currentInstrument];
         if (!instrument) return;
