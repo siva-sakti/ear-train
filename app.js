@@ -145,10 +145,49 @@ function setupMobileAudioUnlock() {
     // On mobile browsers, audio context starts suspended and requires user interaction
     // This function sets up a one-time event listener to resume the context
 
+    let unlocked = false;
+    const banner = document.getElementById('audio-unlock-banner');
+
+    // Detect mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // Show banner on mobile
+    if (isMobile && banner) {
+        banner.style.display = 'block';
+    }
+
     const unlockAudio = async () => {
+        if (unlocked) return;
+
         if (audioEngine && audioEngine.audioContext) {
+            console.log('Attempting to unlock audio context...');
+            console.log('Audio context state before:', audioEngine.audioContext.state);
+
+            // Resume the context
             await audioEngine.resumeContext();
-            console.log('Audio context unlocked for mobile');
+
+            // Play a silent sound to fully unlock audio on iOS/Android
+            // This is required because some mobile browsers need actual audio to play
+            try {
+                const oscillator = audioEngine.audioContext.createOscillator();
+                const gainNode = audioEngine.audioContext.createGain();
+                gainNode.gain.value = 0; // Silent
+                oscillator.connect(gainNode);
+                gainNode.connect(audioEngine.audioContext.destination);
+                oscillator.start(0);
+                oscillator.stop(audioEngine.audioContext.currentTime + 0.001);
+                console.log('Silent unlock sound played');
+            } catch (e) {
+                console.error('Error playing unlock sound:', e);
+            }
+
+            console.log('Audio context state after:', audioEngine.audioContext.state);
+            unlocked = true;
+
+            // Hide banner
+            if (banner) {
+                banner.style.display = 'none';
+            }
         }
 
         // Remove listeners after first interaction
@@ -158,9 +197,9 @@ function setupMobileAudioUnlock() {
     };
 
     // Listen for first user interaction
-    document.addEventListener('touchstart', unlockAudio);
-    document.addEventListener('touchend', unlockAudio);
-    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('touchend', unlockAudio, { once: true });
+    document.addEventListener('click', unlockAudio, { once: true });
 }
 
 // ===== INITIALIZATION =====

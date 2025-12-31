@@ -31,6 +31,36 @@ body {
     padding: 20px;
 }
 
+/* Mobile audio unlock banner */
+.audio-unlock-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #E6D9F6;
+    color: #5A5651;
+    text-align: center;
+    padding: 12px 20px;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 1.1em;
+    animation: slideDown 0.3s ease-out;
+}
+
+.audio-unlock-banner p {
+    margin: 0;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+    }
+    to {
+        transform: translateY(0);
+    }
+}
+
 .container {
     max-width: 900px;
     margin: 0 auto;
