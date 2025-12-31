@@ -990,17 +990,28 @@ function getIntervalName(steps) {
 
 // ===== AUDIO PLAYBACK =====
 async function playNote(noteNumber, duration = 0.5) {
+    console.log(`🎵 playNote called: note=${noteNumber}, duration=${duration}`);
+
     // Check if sound should play
     const shouldPlaySound = practiceMode === 'listen' || practiceMode === 'self-paced';
+    console.log(`shouldPlaySound=${shouldPlaySound}, practiceMode=${practiceMode}`);
 
-    if (!shouldPlaySound) return;
-    if (!audioEngine) return;
+    if (!shouldPlaySound) {
+        console.log('⚠️ Skipping sound - practice mode is test');
+        return;
+    }
+    if (!audioEngine) {
+        console.log('❌ audioEngine is null!');
+        return;
+    }
 
     const scale = SCALE_LIBRARY[currentScale];
     const frequency = BASE_FREQUENCY * scale.ratios[noteNumber - 1];
+    console.log(`Frequency: ${frequency}Hz, AudioContext state: ${audioEngine.audioContext?.state}`);
 
     // Use the enhanced audio engine
     await audioEngine.playNote(frequency, duration);
+    console.log(`✅ playNote completed`);
 }
 
 async function playPattern() {

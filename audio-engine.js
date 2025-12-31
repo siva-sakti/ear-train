@@ -31,15 +31,33 @@ class AudioEngine {
 
     // Main method to play a note
     async playNote(frequency, duration = 0.5) {
-        if (!this.audioContext) return;
+        console.log(`🔊 AudioEngine.playNote: freq=${frequency}Hz, dur=${duration}s`);
+
+        if (!this.audioContext) {
+            console.log('❌ No audioContext!');
+            return;
+        }
+
+        console.log(`AudioContext state BEFORE resume: ${this.audioContext.state}`);
 
         // Resume context if suspended (critical for mobile)
         await this.resumeContext();
 
-        const instrument = INSTRUMENTS[this.currentInstrument];
-        if (!instrument) return;
+        console.log(`AudioContext state AFTER resume: ${this.audioContext.state}`);
 
-        instrument.play(this.audioContext, this.masterGain, frequency, duration);
+        const instrument = INSTRUMENTS[this.currentInstrument];
+        if (!instrument) {
+            console.log(`❌ Instrument '${this.currentInstrument}' not found!`);
+            return;
+        }
+
+        console.log(`🎹 Playing with instrument: ${this.currentInstrument}`);
+        try {
+            instrument.play(this.audioContext, this.masterGain, frequency, duration);
+            console.log(`✅ Instrument.play() called successfully`);
+        } catch (error) {
+            console.error('❌ Error in instrument.play():', error);
+        }
     }
 
     // Cleanup active oscillators
