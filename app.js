@@ -293,6 +293,74 @@ function setupMobileAudioUnlock() {
     document.addEventListener('click', unlockAudio, { once: true });
 }
 
+// ===== DIRECT AUDIO TEST (DEBUGGING) =====
+function setupAudioTest() {
+    const testBtn = document.getElementById('test-audio-btn');
+    const testStatus = document.getElementById('test-audio-status');
+
+    if (!testBtn || !testStatus) return;
+
+    let testContext = null;
+
+    testBtn.addEventListener('click', async () => {
+        let log = '';
+        const addLog = (msg) => {
+            log += msg + '\n';
+            testStatus.textContent = log;
+            console.log('[AUDIO TEST]', msg);
+        };
+
+        try {
+            addLog('=== DIRECT AUDIO TEST STARTED ===');
+            addLog('User agent: ' + navigator.userAgent);
+
+            // Create fresh AudioContext
+            if (!testContext) {
+                testContext = new (window.AudioContext || window.webkitAudioContext)();
+                addLog('✓ AudioContext created');
+            }
+
+            addLog('AudioContext state: ' + testContext.state);
+
+            // Resume if needed
+            if (testContext.state === 'suspended') {
+                addLog('Resuming context...');
+                await testContext.resume();
+                addLog('Context resumed, new state: ' + testContext.state);
+                await new Promise(r => setTimeout(r, 50));
+            }
+
+            // Create and play a simple tone
+            addLog('Creating oscillator...');
+            const now = testContext.currentTime;
+            const osc = testContext.createOscillator();
+            const gain = testContext.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.value = 440; // A4 note
+            gain.gain.value = 0.3;
+
+            osc.connect(gain);
+            gain.connect(testContext.destination);
+
+            addLog('Starting oscillator at time: ' + (now + 0.001));
+            osc.start(now + 0.001);
+            osc.stop(now + 1.001); // Play for 1 second
+
+            addLog('✓ Oscillator scheduled to play');
+            addLog('✓ You should hear a tone now!');
+            addLog('If you hear nothing, check:');
+            addLog('  - Is phone in silent mode?');
+            addLog('  - Is volume up?');
+            addLog('  - Try headphones?');
+
+        } catch (error) {
+            addLog('❌ ERROR: ' + error.message);
+            addLog('Stack: ' + error.stack);
+        }
+    });
+}
+
 // ===== INITIALIZATION =====
 function init() {
     // EXTREME DEBUG
@@ -304,6 +372,9 @@ function init() {
 
     // Mobile audio unlock - resume context on first user interaction
     setupMobileAudioUnlock();
+
+    // Set up audio test button
+    setupAudioTest();
 
     // Set up event listeners
     setupEventListeners();
