@@ -151,9 +151,15 @@ function setupMobileAudioUnlock() {
     // Detect mobile device
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    // Show banner on mobile
-    if (isMobile && banner) {
+    // Debug: Always show banner for now to test
+    console.log('Mobile detection:', isMobile);
+    console.log('User agent:', navigator.userAgent);
+    console.log('Banner element:', banner);
+
+    // Force show banner to test (remove isMobile check temporarily)
+    if (banner) {
         banner.style.display = 'block';
+        banner.querySelector('p').textContent = `Tap to enable audio (Mobile: ${isMobile})`;
     }
 
     const unlockAudio = async () => {
@@ -162,6 +168,10 @@ function setupMobileAudioUnlock() {
         if (audioEngine && audioEngine.audioContext) {
             console.log('Attempting to unlock audio context...');
             console.log('Audio context state before:', audioEngine.audioContext.state);
+
+            if (banner) {
+                banner.querySelector('p').textContent = `Unlocking... (State: ${audioEngine.audioContext.state})`;
+            }
 
             // Resume the context
             await audioEngine.resumeContext();
@@ -179,14 +189,25 @@ function setupMobileAudioUnlock() {
                 console.log('Silent unlock sound played');
             } catch (e) {
                 console.error('Error playing unlock sound:', e);
+                if (banner) {
+                    banner.querySelector('p').textContent = `Error: ${e.message}`;
+                }
             }
 
             console.log('Audio context state after:', audioEngine.audioContext.state);
             unlocked = true;
 
-            // Hide banner
+            // Update banner
             if (banner) {
-                banner.style.display = 'none';
+                banner.querySelector('p').textContent = `Audio unlocked! (State: ${audioEngine.audioContext.state})`;
+                setTimeout(() => {
+                    banner.style.display = 'none';
+                }, 2000);
+            }
+        } else {
+            console.error('AudioEngine not initialized!');
+            if (banner) {
+                banner.querySelector('p').textContent = 'Error: Audio engine not ready';
             }
         }
 
