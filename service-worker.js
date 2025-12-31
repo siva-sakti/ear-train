@@ -9,7 +9,7 @@
 // - Uses cache-first strategy for offline support
 // - PWA functionality fully enabled
 //
-const CACHE_NAME = 'ear-training-v3'; // Force update for mobile audio debugging
+const CACHE_NAME = 'ear-training-v4'; // Force update for audio help features
 const urlsToCache = [
   '/',
   '/index.html',
