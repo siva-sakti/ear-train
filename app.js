@@ -1,5 +1,27 @@
 // Ear Training App - Main Application Logic
 
+// ===== VERSION BANNER (DEBUGGING) =====
+const APP_VERSION = '2025-12-30-MOBILE-DEBUG-v3';
+console.log(`🔴 APP VERSION LOADING: ${APP_VERSION}`);
+
+// Create version banner IMMEDIATELY (before DOMContentLoaded)
+(function() {
+    const showVersionBanner = () => {
+        const banner = document.createElement('div');
+        banner.id = 'version-banner';
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:15px;z-index:99999;text-align:center;font-size:18px;font-weight:bold;box-shadow:0 4px 8px rgba(0,0,0,0.3);';
+        banner.innerHTML = `🔴 VERSION: ${APP_VERSION} 🔴`;
+        document.body.insertBefore(banner, document.body.firstChild);
+        console.log('✅ Version banner created');
+    };
+
+    if (document.body) {
+        showVersionBanner();
+    } else {
+        document.addEventListener('DOMContentLoaded', showVersionBanner);
+    }
+})();
+
 // ===== CONFIGURATION =====
 const BASE_FREQUENCY = 261.63; // Middle C (C4)
 
