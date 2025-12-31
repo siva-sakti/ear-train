@@ -145,6 +145,9 @@ function setupMobileAudioUnlock() {
     // On mobile browsers, audio context starts suspended and requires user interaction
     // This function sets up a one-time event listener to resume the context
 
+    // EXTREME DEBUG: Alert to confirm function runs
+    alert('setupMobileAudioUnlock() called!');
+
     // DEBUG: Change subtitle to show this function ran
     const subtitle = document.querySelector('.subtitle');
     if (subtitle) {
@@ -239,6 +242,9 @@ function setupMobileAudioUnlock() {
 
 // ===== INITIALIZATION =====
 function init() {
+    // EXTREME DEBUG
+    alert('init() called!');
+
     // Initialize enhanced audio engine
     audioEngine = new AudioEngine();
     audioEngine.initialize();
