@@ -37,58 +37,6 @@ body {
     position: relative;
 }
 
-/* Corner Doodles - DISABLED (covering content, not all showing)
-.container::before,
-.container::after {
-    content: '';
-    position: fixed;
-    width: 100px;
-    height: 100px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    opacity: 0.2;
-    pointer-events: none;
-    z-index: 9999;
-}
-
-.container::before {
-    top: 10px;
-    left: 10px;
-    background-image: url('../assets/tl.png');
-}
-
-.container::after {
-    top: 10px;
-    right: 10px;
-    background-image: url('../assets/tr.png');
-}
-
-body::before,
-body::after {
-    content: '';
-    position: fixed;
-    width: 100px;
-    height: 100px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    opacity: 0.2;
-    pointer-events: none;
-    z-index: 9999;
-}
-
-body::before {
-    bottom: 10px;
-    left: 10px;
-    background-image: url('../assets/bl.png');
-}
-
-body::after {
-    bottom: 10px;
-    right: 10px;
-    background-image: url('../assets/br.png');
-}
-*/
-
 /* Header */
 header {
     text-align: center;
@@ -174,7 +122,7 @@ input[type="checkbox"], input[type="radio"] {
 
 /* Buttons - Using handdrawn images */
 .btn {
-    padding: 10px 20px;
+    /* padding: 10px 20px; */  /* REMOVED - Set padding in specific button variants instead */
     font-size: 1em;
     font-family: inherit;
     border: none;  /* Removed - using handdrawn images */
@@ -319,8 +267,8 @@ input[type="checkbox"], input[type="radio"] {
 }
 
 .note-circle {
-    width: 110px;
-    height: 110px;
+    width: 120px;
+    height: 120px;
     border: none;
     border-radius: 0;
     display: flex;
@@ -333,7 +281,7 @@ input[type="checkbox"], input[type="radio"] {
     position: relative;
     box-shadow: none;
     /* Handdrawn circle backgrounds set below */
-    background-size: contain;
+    background-size: 100% 100%;
     background-repeat: no-repeat;
     background-position: center;
 }
@@ -352,9 +300,9 @@ input[type="checkbox"], input[type="radio"] {
 }
 
 .note-circle.active {
-    background: transparent;  /* Removed - using handdrawn images */
+    background-color: transparent;  /* Changed from 'background:' to avoid resetting background-image */
     border: none;
-    transform: scale(1.3);
+    transform: scale(1.15);  /* Gentle scaling animation - drawing should accommodate this */
     box-shadow: none;  /* Removed - using handdrawn images */
 }
 
@@ -366,7 +314,7 @@ input[type="checkbox"], input[type="radio"] {
 
 .note-circle.in-pattern {
     border: none;  /* Removed - using handdrawn images */
-    background: transparent;  /* Removed - using handdrawn images */
+    background-color: transparent;  /* Changed from 'background:' to avoid resetting background-image */
 }
 
 .current-note-display {
@@ -510,16 +458,21 @@ details[open] summary {
     }
 
     .note-circle {
-        width: 40px;
-        height: 40px;
+        width: 70px;
+        height: 70px;
+    }
+
+    /* Smaller scale on mobile so it doesn't overflow */
+    .note-circle.active {
+        transform: scale(1.1);
     }
 
     .note-number {
-        font-size: 1em;
+        font-size: 0.9em;
     }
 
     .note-name {
-        font-size: 0.6em;
+        font-size: 0.55em;
     }
 
     /* Keep playback buttons side-by-side on mobile */
@@ -538,9 +491,12 @@ details[open] summary {
         max-height: 40px;
     }
 
-    /* Other buttons can stretch */
+    /* Other buttons - flexible width but not stretched */
     .btn:not(#play-btn):not(#pause-btn):not(#restart-btn) {
-        width: 100%;
+        width: auto;
+        max-width: 100%;
+        margin: 0 auto;
+        display: block;
     }
 }
 
@@ -599,6 +555,34 @@ details[open] summary {
     font-size: 0.9em;
 }
 
+/* Bookmark button with handdrawn star */
+#bookmark-pattern-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px 10px 40px;  /* Left padding for star space (no !important needed now) */
+    position: relative;
+}
+
+#bookmark-pattern-btn::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    width: 28px;
+    height: 28px;
+    background-image: url('../assets/star-outline.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: all 0.3s ease;
+}
+
+/* When bookmarked, show filled star */
+#bookmark-pattern-btn.bookmarked::before {
+    background-image: url('../assets/star-filled.png');
+    transform: scale(1.1);
+}
+
 /* ========================================
    HANDDRAWN ELEMENTS
    Assets go in /assets folder
@@ -614,43 +598,69 @@ details[open] summary {
 .container::after {
     content: '';
     position: absolute;
-    width: 100px;
-    height: 100px;
-    opacity: 0.3;
+    width: 80px;
+    height: 80px;
+    opacity: 0.25;
     pointer-events: none;
     z-index: -1;
 }
 
 .container::before {
-    top: 0;
-    left: 0;
-    background-image: url('../assets/doodle-corner-tl.png');
+    top: 10px;
+    left: 10px;
+    background-image: url('../assets/tl.png');
     background-size: contain;
     background-repeat: no-repeat;
 }
 
 .container::after {
-    top: 0;
-    right: 0;
-    background-image: url('../assets/doodle-corner-tr.png');
+    top: 10px;
+    right: 10px;
+    background-image: url('../assets/tr.png');
     background-size: contain;
     background-repeat: no-repeat;
 }
 
-/* Section dividers - REMOVED, user already has handdrawn dividers in HTML */
-/*
+/* Bottom corner doodles */
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    width: 80px;
+    height: 80px;
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: -1;
+}
+
+body::before {
+    bottom: 10px;
+    left: 10px;
+    background-image: url('../assets/bl.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+body::after {
+    bottom: 10px;
+    right: 10px;
+    background-image: url('../assets/br.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+/* Section dividers */
 .section:not(:last-child)::after {
     content: '';
     display: block;
     height: 20px;
-    margin: 24px 0 16px 0;
-    background-image: url('assets/section-divider.png');
+    margin: 40px 0 0px 0;  /* Reduced from 24px - less space between content and divider */
+    background-image: url('../assets/section-divider.png');
     background-repeat: repeat-x;
     background-position: center;
     background-size: auto 20px;
     opacity: 0.6;
 }
-*/
 
 /* Handdrawn Buttons - Play/Pause/Restart */
 /* Text is hidden because it's drawn into the button images */
@@ -663,7 +673,7 @@ details[open] summary {
     height: 50px;
     max-width: 100px;
     max-height: 50px;
-    background-size: contain;
+    background-size: 100% 100%;
     background-repeat: no-repeat;
     background-position: center;
     color: transparent;
@@ -701,7 +711,7 @@ details[open] summary {
 /* Small buttons (like pakad play buttons) */
 .btn-small {
     background-image: url('../assets/button-border.png');
-    background-size: contain;
+    background-size: 100% 100%;
     background-repeat: no-repeat;
     background-position: center;
     min-width: 80px;
@@ -742,7 +752,7 @@ details[open] summary {
     display: inline-block;
     width: 16px;
     height: 20px;
-    background-size: contain;
+    background-size: 100% 100%;
     background-repeat: no-repeat;
     background-position: center;
 }

@@ -56,7 +56,7 @@ const INTERVAL_NAMES = {
 };
 
 // ===== STATE =====
-let audioContext = null;
+let audioEngine = null; // New audio engine instance
 let currentPattern = [];
 let currentScale = 'major';
 let currentDifficulty = 'medium';
@@ -73,6 +73,7 @@ let playbackTimeout = null;
 let lastNote = null;
 let currentLoop = 1;
 let totalLoops = 1;
+let currentInstrument = 'harmonium'; // Default instrument
 
 // ===== DOM ELEMENTS =====
 const elements = {
@@ -86,6 +87,9 @@ const elements = {
     scale: document.getElementById('scale'),
     difficulty: document.getElementById('difficulty'),
     generateBtn: document.getElementById('generate-btn'),
+
+    // Audio settings
+    instrument: document.getElementById('instrument'),
 
     // Display settings
     showNumbers: document.getElementById('show-numbers'),
@@ -138,8 +142,9 @@ const elements = {
 
 // ===== INITIALIZATION =====
 function init() {
-    // Initialize Web Audio API
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    // Initialize enhanced audio engine
+    audioEngine = new AudioEngine();
+    audioEngine.initialize();
 
     // Set up event listeners
     setupEventListeners();
@@ -153,11 +158,31 @@ function init() {
     // Initialize practice history
     initializePracticeHistory();
 
+    // Load saved instrument preference
+    loadInstrumentPreference();
+
     // Register service worker for PWA support
-    if ('serviceWorker' in navigator) {
+    // TEMPORARILY DISABLED FOR DEVELOPMENT - WILL RE-ENABLE LATER
+    if (false && 'serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js')
             .then((registration) => {
                 console.log('Service Worker registered:', registration);
+
+                // Check for updates on page load
+                registration.update();
+
+                // Detect development mode
+                const isLocalhost = window.location.hostname === 'localhost' ||
+                                  window.location.hostname === '127.0.0.1' ||
+                                  window.location.port === '8001';
+
+                if (isLocalhost) {
+                    console.log('%c🔧 DEVELOPMENT MODE: Service worker using network-first strategy',
+                                'background: #4CAF50; color: white; padding: 4px 8px; border-radius: 3px;');
+                    console.log('Edit → Save → Refresh to see changes immediately!');
+                } else {
+                    console.log('Production mode: Service worker using cache-first strategy for offline support');
+                }
             })
             .catch((error) => {
                 console.log('Service Worker registration failed:', error);
@@ -181,6 +206,9 @@ function setupEventListeners() {
 
     // Bookmarks
     elements.bookmarkPatternBtn.addEventListener('click', bookmarkCurrentPattern);
+
+    // Audio settings
+    elements.instrument.addEventListener('change', handleInstrumentChange);
 
     // Display settings
     elements.showNumbers.addEventListener('change', handleDisplayToggle);
@@ -632,6 +660,27 @@ function handleSyllableSystemChange(e) {
     }
 }
 
+function handleInstrumentChange(e) {
+    currentInstrument = e.target.value;
+    if (audioEngine) {
+        audioEngine.setInstrument(currentInstrument);
+    }
+
+    // Save preference to localStorage
+    localStorage.setItem('preferredInstrument', currentInstrument);
+}
+
+function loadInstrumentPreference() {
+    const saved = localStorage.getItem('preferredInstrument');
+    if (saved && INSTRUMENTS[saved]) {
+        currentInstrument = saved;
+        elements.instrument.value = saved;
+        if (audioEngine) {
+            audioEngine.setInstrument(currentInstrument);
+        }
+    }
+}
+
 function handlePracticeModeChange(e) {
     practiceMode = e.target.value;
 
@@ -788,31 +837,13 @@ function playNote(noteNumber, duration = 0.5) {
     const shouldPlaySound = practiceMode === 'listen' || practiceMode === 'self-paced';
 
     if (!shouldPlaySound) return;
-    if (!audioContext) return;
+    if (!audioEngine) return;
 
     const scale = SCALE_LIBRARY[currentScale];
     const frequency = BASE_FREQUENCY * scale.ratios[noteNumber - 1];
 
-    // Create oscillator
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-
-    // Envelope
-    const now = audioContext.currentTime;
-    gainNode.gain.setValueAtTime(0, now);
-    gainNode.gain.linearRampToValueAtTime(0.3, now + 0.05);
-    gainNode.gain.linearRampToValueAtTime(0.2, now + 0.1);
-    gainNode.gain.setValueAtTime(0.2, now + duration - 0.1);
-    gainNode.gain.linearRampToValueAtTime(0, now + duration);
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-
-    oscillator.start(now);
-    oscillator.stop(now + duration);
+    // Use the enhanced audio engine
+    audioEngine.playNote(frequency, duration);
 }
 
 async function playPattern() {
@@ -1022,9 +1053,11 @@ function bookmarkCurrentPattern() {
     loadBookmarks();
 
     // Visual feedback
-    elements.bookmarkPatternBtn.textContent = '✓ Bookmarked!';
+    elements.bookmarkPatternBtn.textContent = 'Bookmarked!';
+    elements.bookmarkPatternBtn.classList.add('bookmarked');
     setTimeout(() => {
-        elements.bookmarkPatternBtn.textContent = '⭐ Bookmark This Pattern';
+        elements.bookmarkPatternBtn.textContent = 'Bookmark This Pattern';
+        elements.bookmarkPatternBtn.classList.remove('bookmarked');
     }, 2000);
 }
 

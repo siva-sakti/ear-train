@@ -22,13 +22,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@300;400;600&family=Patrick+Hand&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=1767129596">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Ear Training Practice</h1>
-            <p class="subtitle">Practice scales and improve your musical ear</p>
+            <h1>Ear Training</h1>
+            <p class="subtitle">Practice so that we may sing praise to Your name!</p>
         </header>
 
         <main>
@@ -98,6 +98,25 @@
                 </div>
 
                 <button id="generate-btn" class="btn btn-primary">Generate New Pattern</button>
+            </section>
+
+            <!-- Audio Settings -->
+            <section class="section">
+                <h2>Audio Settings</h2>
+
+                <div class="setting-row">
+                    <label for="instrument">Instrument Sound:</label>
+                    <select id="instrument">
+                        <option value="harmonium" selected>Harmonium (Indian reed organ)</option>
+                        <option value="tanpura">Tanpura (Resonant drone)</option>
+                        <option value="piano">Piano (Western classic)</option>
+                        <option value="bansuri">Bansuri (Bamboo flute)</option>
+                        <option value="sarangi">Sarangi (Bowed string)</option>
+                        <option value="veena">Veena/Sitar (Plucked string)</option>
+                        <option value="bell">Bell (Clear & bright)</option>
+                        <option value="sine">Pure Tone (Simple reference)</option>
+                    </select>
+                </div>
             </section>
 
             <!-- Notation Display Settings -->
@@ -242,7 +261,7 @@
             <section class="section">
                 <h2>Pattern Bookmarks</h2>
                 <button id="bookmark-pattern-btn" class="btn" disabled>
-                    ⭐ Bookmark This Pattern
+                    Bookmark This Pattern
                 </button>
                 <div id="bookmarks-list" class="bookmarks-list">
                     <p class="empty-state">No bookmarks yet. Generate a pattern and bookmark it!</p>
@@ -288,6 +307,7 @@
     </div>
 
     <script src="scales.js"></script>
+    <script src="audio-engine.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
