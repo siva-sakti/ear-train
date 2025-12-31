@@ -11,14 +11,22 @@
 //
 const CACHE_NAME = 'ear-training-v4'; // Force update for audio help features
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/scales.js',
-  '/manifest.json'
+  "/",
+  "/index.html",
+  "/styles.css",
+  "/app.js",
+  "/scales.js",
+  "/audio-engine.js",
+  "/manifest.json",
+  "/icon-192.png",
+  "/assets/play-button.png",
+  "/assets/pause-button.png",
+  "/assets/restart-button.png",
+  "/assets/button-border.png",
+  "/assets/note-circle-active.png",
+  "/assets/note-circle-inactive.png",
+  "/assets/note-circle-pattern.png"
 ];
-
 // Install service worker and cache files
 self.addEventListener('install', (event) => {
   event.waitUntil(

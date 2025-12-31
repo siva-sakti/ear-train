@@ -259,6 +259,40 @@ function updateAudioStatus() {
 
 // ===== INITIALIZATION =====
 function init() {
+
+    // === AUTOMATIC CACHE BUSTING ON NEW DEPLOY ===
+    fetch("/version.json?t=" + Date.now())
+        .then(res => {
+            if (!res.ok) throw new Error("Failed to fetch version");
+            return res.json();
+        })
+        .then(data => {
+            const newVersion = data.version;
+            const oldVersion = localStorage.getItem("appVersion");
+
+            if (oldVersion && oldVersion !== newVersion) {
+                // New version detected → force full refresh
+                console.log("New version detected:", newVersion, "→ forcing reload");
+
+                // Unregister old service worker
+                if (navigator.serviceWorker) {
+                    navigator.serviceWorker.getRegistrations().then(regs => {
+                        regs.forEach(reg => reg.unregister());
+                    });
+                }
+
+                // Clear localStorage and hard reload
+                localStorage.clear();
+                window.location.reload(true); // true forces reload from server
+            } else {
+                // First visit or same version
+                localStorage.setItem("appVersion", newVersion);
+            }
+        })
+        .catch(err => {
+            console.warn("Version check failed (offline or error) → continuing", err);
+        });
+    // =============================================
     // Initialize enhanced audio engine
     audioEngine = new AudioEngine();
     audioEngine.initialize();
