@@ -34,16 +34,9 @@
         <header>
             <h1>Ear Training</h1>
             <p class="subtitle">Practice so that we may sing praise to Your name!</p>
-        </header>
 
-        <!-- Mode Toggle -->
-        <div class="mode-toggle">
-            <button id="training-mode-btn" class="mode-btn active" data-mode="training">Training Mode</button>
-            <button id="guessing-mode-btn" class="mode-btn" data-mode="guessing">Guessing Mode</button>
-        </div>
-
-        <!-- Audio status and help -->
-        <div class="audio-controls-below-header">
+            <!-- Audio status and help (positioned in top right) -->
+            <div class="audio-controls-top-right">
             <!-- Audio status indicator (desktop only) -->
             <div id="audio-status-indicator" class="audio-status-indicator" title="Audio status">
                 <svg width="16" height="16" viewBox="0 0 16 16" class="status-icon">
@@ -72,9 +65,24 @@
                 </div>
             </div>
         </div>
+        </header>
+
+        <!-- Mode Toggle -->
+        <div class="mode-toggle">
+            <button id="training-mode-btn" class="mode-btn active" data-mode="training">Training Mode</button>
+            <button id="guessing-mode-btn" class="mode-btn" data-mode="guessing">Guessing Mode</button>
+        </div>
 
         <!-- Training Mode Container -->
         <main id="training-mode-container">
+            <!-- Training Type Toggle -->
+            <div class="training-type-toggle">
+                <button id="note-training-btn" class="training-type-btn active" data-type="note">Note Training</button>
+                <button id="interval-training-btn" class="training-type-btn" data-type="interval">Interval Training</button>
+            </div>
+
+            <!-- Note Training Container -->
+            <div id="note-training-container">
             <!-- Pattern Generation Settings -->
             <section class="section">
                 <h2>Pattern Settings</h2>
@@ -199,16 +207,6 @@
                 <div id="scale-info" class="scale-info"></div>
             </section>
 
-            <!-- Visual Scale Display -->
-            <section class="section">
-                <h2>Scale Position</h2>
-                <div id="scale-visual" class="scale-visual">
-                    <!-- Will be populated by JavaScript -->
-                </div>
-                <div id="current-note" class="current-note-display"></div>
-                <div id="interval-display" class="interval-display"></div>
-            </section>
-
             <!-- Pakad Phrases (Hindustani Ragas only) -->
             <section id="pakad-section" class="section" style="display: none;">
                 <details>
@@ -220,8 +218,124 @@
                 </details>
             </section>
 
+            </div>
+            <!-- End Note Training Container -->
+
+            <!-- Interval Training Container (hidden by default) -->
+            <div id="interval-training-container" style="display: none;">
+
+                <!-- Pattern Settings -->
+                <section class="section">
+                    <h2>Interval Settings</h2>
+
+                    <div class="setting-row">
+                        <label>Mode:</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="interval-mode" value="progressions" checked>
+                                Progressions (Sequences)
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="interval-mode" value="single">
+                                Single Intervals
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="interval-scale">Scale:</label>
+                        <select id="interval-scale">
+                            <optgroup label="Western Scales">
+                                <option value="major" selected>Major (Ionian)</option>
+                                <option value="natural-minor">Natural Minor (Aeolian)</option>
+                                <option value="harmonic-minor">Harmonic Minor</option>
+                                <option value="melodic-minor">Melodic Minor</option>
+                                <option value="pentatonic-major">Pentatonic Major</option>
+                                <option value="pentatonic-minor">Pentatonic Minor</option>
+                            </optgroup>
+                            <optgroup label="Hindustani Ragas">
+                                <option value="bhairav">Bhairav (Morning)</option>
+                                <option value="yaman">Yaman (Evening)</option>
+                                <option value="kafi">Kafi (Afternoon)</option>
+                                <option value="bilaval">Bilaval (Morning)</option>
+                                <option value="bhairavi">Bhairavi (Night)</option>
+                                <option value="todi">Todi (Afternoon)</option>
+                            </optgroup>
+                            <optgroup label="Carnatic Ragas">
+                                <option value="mayamalavagowla">Mayamalavagowla (15)</option>
+                                <option value="shankarabharanam">Shankarabharanam (29)</option>
+                                <option value="kalyani">Kalyani (65)</option>
+                                <option value="kharaharapriya">Kharaharapriya (22)</option>
+                                <option value="harikambhoji">Harikambhoji (28)</option>
+                                <option value="natabhairavi">Natabhairavi (20)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="interval-pattern-mode">Pattern Source:</label>
+                        <select id="interval-pattern-mode">
+                            <option value="pedagogical" selected>Pedagogical (Traditional)</option>
+                            <option value="random">Random (Rule-based)</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-row">
+                        <label for="interval-difficulty">Difficulty:</label>
+                        <select id="interval-difficulty">
+                            <option value="easy">Easy (2nds only)</option>
+                            <option value="medium" selected>Medium (up to 5ths)</option>
+                            <option value="hard">Hard (all intervals)</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-row" id="pattern-length-row">
+                        <label for="pattern-length">Number of Intervals:</label>
+                        <input type="number" id="pattern-length" min="1" max="12" value="1">
+                    </div>
+
+                    <div class="setting-row">
+                        <label>Playback Style:</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="interval-style" value="melodic" checked>
+                                Melodic (Sequential)
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="interval-style" value="harmonic">
+                                Harmonic (Together)
+                            </label>
+                        </div>
+                    </div>
+
+                    <button id="generate-interval-btn" class="btn">Generate Interval Pattern</button>
+                </section>
+
+                <!-- Pattern Display -->
+                <section class="section pattern-display-section">
+                    <h2>Current Interval Pattern</h2>
+                    <div id="interval-pattern-display" class="pattern-display">
+                        <span class="pattern-text">Click "Generate Interval Pattern" to start</span>
+                    </div>
+                </section>
+
+            </div>
+            <!-- End Interval Training Container -->
+
+            <!-- SHARED SECTIONS (visible for both Note and Interval training) -->
+
+            <!-- Visual Scale Display -->
+            <section class="section" id="shared-scale-visual-section">
+                <h2>Scale Position</h2>
+                <div id="scale-visual" class="scale-visual">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <div id="current-note" class="current-note-display"></div>
+                <div id="interval-display" class="interval-display"></div>
+            </section>
+
             <!-- Playback Controls -->
-            <section class="section">
+            <section class="section" id="shared-playback-section">
                 <h2>Playback</h2>
 
                 <!-- Practice Mode Toggle -->
@@ -235,10 +349,6 @@
                         <label class="radio-label">
                             <input type="radio" name="practice-mode" value="self-paced">
                             Self-Paced (you control)
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="practice-mode" value="test">
-                            Test Mode (coming soon)
                         </label>
                     </div>
 
@@ -285,23 +395,30 @@
                         <span id="speed-value">1.0x</span>
                     </div>
 
+                    <!-- Interval Training: Gap between notes within interval -->
+                    <div class="setting-row" id="interval-note-gap-row" style="display: none;">
+                        <label for="interval-note-gap">Gap between notes (in interval):</label>
+                        <input type="range" id="interval-note-gap" min="0" max="2000" step="50" value="1000">
+                        <span id="interval-note-gap-value">1000ms</span>
+                    </div>
+
+                    <!-- Interval Training: Gap between intervals -->
+                    <div class="setting-row" id="interval-pattern-gap-row" style="display: none;">
+                        <label for="interval-pattern-gap">Gap between intervals:</label>
+                        <input type="range" id="interval-pattern-gap" min="0" max="2000" step="100" value="1200">
+                        <span id="interval-pattern-gap-value">1200ms</span>
+                    </div>
+
                     <div class="setting-row">
                         <label for="loop-count">Loop pattern:</label>
                         <input type="number" id="loop-count" min="1" max="10" value="1">
                         <span>times</span>
                     </div>
-
-                    <div class="setting-row">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="manual-mode">
-                            Manual stepping (click to play each note)
-                        </label>
-                    </div>
                 </details>
             </section>
 
-            <!-- Pattern Bookmarks -->
-            <section class="section">
+            <!-- Pattern Bookmarks (Note Training) -->
+            <section class="section" id="note-bookmarks-section">
                 <h2>Pattern Bookmarks</h2>
                 <button id="bookmark-pattern-btn" class="btn" disabled>
                     Bookmark This Pattern
@@ -311,8 +428,17 @@
                 </div>
             </section>
 
-            <!-- Practice History -->
-            <section class="section">
+            <!-- Interval Bookmarks (Interval Training) -->
+            <section class="section" id="interval-bookmarks-section" style="display: none;">
+                <h2>Interval Bookmarks</h2>
+                <button id="bookmark-interval-btn" class="btn" disabled>Bookmark This Pattern</button>
+                <div id="interval-bookmarks-list">
+                    <p class="info-text">No bookmarked intervals yet</p>
+                </div>
+            </section>
+
+            <!-- Practice History (Note Training only) -->
+            <section class="section" id="practice-history-section">
                 <details>
                     <summary>Practice History</summary>
                     <div class="practice-stats">
@@ -335,8 +461,8 @@
                 </details>
             </section>
 
-            <!-- Coming Soon Sections -->
-            <section class="section info-section">
+            <!-- Coming Soon (Note Training only) -->
+            <section class="section info-section" id="coming-soon-section">
                 <details>
                     <summary>Coming Soon</summary>
                     <ul>
@@ -346,6 +472,7 @@
                     </ul>
                 </details>
             </section>
+
         </main>
 
         <!-- Guessing Mode Container (hidden by default) -->
@@ -363,7 +490,12 @@
                     <h2>Note Guessing</h2>
                     <p class="info-text">Listen to a single note and identify which scale degree it is (1-7)</p>
 
-                    <button id="play-mystery-note" class="btn btn-primary" style="display: block; margin: 24px auto;">Play Mystery Note</button>
+                    <div class="guess-play-controls" style="display: flex; justify-content: center; align-items: center; gap: 4px; margin: 24px auto;">
+                        <button id="play-mystery-note" class="btn btn-primary">Play Mystery Note</button>
+                        <button id="reset-mystery-note" class="icon-btn" title="Reset to get a new note" style="background: transparent; border: none; cursor: pointer; padding: 4px;">
+                            <img src="assets/reset.png" alt="Reset" style="width: 36px; height: 36px;">
+                        </button>
+                    </div>
 
                     <div class="guess-options">
                         <div class="note-buttons">
@@ -406,7 +538,12 @@
                     <p class="info-text">Listen to two notes and identify the interval between them</p>
 
                     <div class="guess-play-area">
-                        <button id="play-mystery-interval" class="btn btn-primary">Play Mystery Interval</button>
+                        <div style="display: flex; justify-content: center; align-items: center; gap: 4px;">
+                            <button id="play-mystery-interval" class="btn btn-primary">Play Mystery Interval</button>
+                            <button id="reset-mystery-interval" class="icon-btn" title="Reset to get a new interval" style="background: transparent; border: none; cursor: pointer; padding: 4px;">
+                                <img src="assets/reset.png" alt="Reset" style="width: 36px; height: 36px;">
+                            </button>
+                        </div>
                         <div class="guess-progress">
                             <span id="interval-question-number">Question 1/10</span>
                             <span id="interval-correct-count">Correct: 0</span>

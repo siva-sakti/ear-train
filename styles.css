@@ -69,9 +69,10 @@ body {
 
 /* Header */
 header {
+    position: relative;
     text-align: center;
-    margin-bottom: 40px;
-    padding-bottom: 20px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--border);
 }
 
@@ -291,8 +292,8 @@ input[type="checkbox"], input[type="radio"] {
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 32px 16px;
-    margin-bottom: 8px;
+    padding: 24px 16px 16px 16px;
+    margin-bottom: 4px;
     position: relative;
 }
 
@@ -613,6 +614,25 @@ details[open] summary {
     transform: scale(1.1);
 }
 
+/* Interval bookmark button - same star styling */
+#bookmark-interval-btn::before {
+    content: '';
+    position: absolute;
+    left: 2px;
+    width: 28px;
+    height: 28px;
+    background-image: url('../assets/star-outline.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    transition: all 0.3s ease;
+}
+
+#bookmark-interval-btn.bookmarked::before {
+    background-image: url('../assets/star-filled.png');
+    transform: scale(1.1);
+}
+
 /* ========================================
    HANDDRAWN ELEMENTS
    Assets go in /assets folder
@@ -763,6 +783,11 @@ body::after {
 }
 
 .note-circle.active {
+    background-image: url('../assets/note-circle-active.png');
+}
+
+/* Ensure active state always wins over in-pattern */
+.note-circle.in-pattern.active {
     background-image: url('../assets/note-circle-active.png');
 }
 
@@ -956,16 +981,14 @@ body::after {
     flex-shrink: 0;
 }
 
-/* ===== AUDIO STATUS & HELP BELOW HEADER ===== */
-.audio-controls-below-header {
-    position: relative;
+/* ===== AUDIO STATUS & HELP IN TOP LEFT ===== */
+.audio-controls-top-right {
+    position: absolute;
+    top: 8px;
+    left: 8px;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     gap: 8px;
-    margin-top: 8px;
-    padding-top: 12px;
-    margin-bottom: 24px;
 }
 
 .audio-status-indicator {
@@ -1013,6 +1036,7 @@ body::after {
     justify-content: center;
     opacity: 0.5;
     transition: opacity 0.2s;
+    margin-left: 50px;
 }
 
 .audio-help-icon:hover {
@@ -1094,30 +1118,34 @@ body::after {
     display: flex;
     justify-content: center;
     gap: 16px;
-    margin: 12px 0 16px 0;
-    padding: 12px 0;
+    margin: 0 0 12px 0;
+    padding: 0 0 8px 0;
     border-bottom: 1px solid var(--border);
 }
 
 .mode-btn {
-    padding: 10px 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
+    padding: 10px 28px;
+    background-color: transparent;
+    background-image: url('../assets/button-border.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border: none;
     color: var(--text);
     font-family: 'Crimson Pro', serif;
     font-size: 1em;
+    font-weight: normal;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
 .mode-btn:hover {
-    background: var(--highlight);
+    background-image: url('../assets/button-orange.png');
+    transform: translateY(-1px);
 }
 
 .mode-btn.active {
-    background: var(--accent);
-    border-color: var(--accent);
+    background-image: url('../assets/button-purple.png');
+    color: var(--text);
 }
 
 /* ===== GUESSING MODE ===== */
@@ -1126,35 +1154,39 @@ body::after {
     justify-content: center;
     gap: 12px;
     margin-bottom: 24px;
+    margin-top: 8px;
 }
 
 .guess-type-btn {
-    padding: 8px 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 4px;
+    padding: 10px 28px;
+    background-color: transparent;
+    background-image: url('../assets/button-border.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border: none;
     color: var(--text);
     font-family: 'Crimson Pro', serif;
     font-size: 0.95em;
+    font-weight: normal;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
 .guess-type-btn:hover {
-    background: var(--highlight);
+    background-image: url('../assets/button-orange.png');
+    transform: translateY(-1px);
 }
 
 .guess-type-btn.active {
-    background: var(--secondary);
-    border-color: var(--secondary);
+    background-image: url('../assets/button-purple.png');
+    color: var(--text);
 }
 
 .guess-play-area {
     text-align: center;
     padding: 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    background: transparent;
+    border: none;
     margin-bottom: 24px;
 }
 
@@ -1230,18 +1262,21 @@ body::after {
 
 .interval-guess-btn {
     padding: 12px 16px;
-    background: var(--surface);
-    border: 2px solid var(--border);
-    border-radius: 6px;
+    background-color: transparent;
+    background-image: url('../assets/button-border.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border: none;
     font-family: 'Crimson Pro', serif;
     font-size: 0.95em;
+    font-weight: normal;
     color: var(--text);
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
 }
 
 .interval-guess-btn:hover {
-    background: var(--highlight);
+    background-image: url('../assets/button-green.png');
     transform: translateY(-2px);
 }
 
@@ -1289,6 +1324,143 @@ body::after {
     flex-wrap: wrap;
 }
 
+/* ========================================
+   INTERVAL TRAINING STYLES
+   ======================================== */
+
+/* Training Type Toggle (Note vs Interval) */
+.training-type-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 0;
+    margin-bottom: 16px;
+    padding-top: 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--border);
+}
+
+.training-type-btn {
+    padding: 10px 28px;
+    background-color: transparent;
+    background-image: url('../assets/button-border.png');
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    border: none;
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 1em;
+    font-weight: normal;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.training-type-btn:hover {
+    background-image: url('../assets/button-orange.png');
+    transform: translateY(-1px);
+}
+
+.training-type-btn.active {
+    background-image: url('../assets/button-purple.png');
+    color: var(--text);
+}
+
+/* Interval Pattern Display */
+.interval-pattern {
+    font-size: 1.2em;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.interval-notation {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.interval-letter {
+    height: 50px;
+    width: auto;
+    vertical-align: middle;
+    margin-right: 2px;
+}
+
+.interval-arrow {
+    height: 50px;
+    width: auto;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+#interval-pattern-display {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Interval Highlighting on Scale Circle */
+.note-circle.interval-start {
+    transform: scale(1.15);
+    position: relative;
+}
+
+.note-circle.interval-end {
+    transform: scale(1.15);
+    position: relative;
+}
+
+.note-circle.interval-start::before {
+    content: '↓';
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px;
+    color: var(--accent);
+    font-weight: bold;
+}
+
+.note-circle.interval-end::after {
+    content: '↑';
+    position: absolute;
+    bottom: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px;
+    color: var(--note-active);
+    font-weight: bold;
+}
+
+/* Radio Group Styling for Interval Options */
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 6px 0;
+    font-size: 0.95em;
+}
+
+.radio-label input[type="radio"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
 /* Mobile adjustments */
 @media (max-width: 600px) {
     /* Hide status indicator on mobile - it's not accurate when ringer is off */
@@ -1301,5 +1473,9 @@ body::after {
         right: 16px;
         transform: none;
         max-width: none;
+    }
+
+    .guess-play-controls {
+        max-width: fit-content;
     }
 }

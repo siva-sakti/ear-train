@@ -55,6 +55,58 @@ const INTERVAL_NAMES = {
     12: 'Octave'
 };
 
+// Detailed interval names with short notations
+const INTERVAL_NAMES_DETAILED = {
+    0: { short: 'P1', long: 'Perfect Unison' },
+    1: { short: 'm2', long: 'Minor Second' },
+    2: { short: 'M2', long: 'Major Second' },
+    3: { short: 'm3', long: 'Minor Third' },
+    4: { short: 'M3', long: 'Major Third' },
+    5: { short: 'P4', long: 'Perfect Fourth' },
+    6: { short: 'TT', long: 'Tritone' },
+    7: { short: 'P5', long: 'Perfect Fifth' },
+    8: { short: 'm6', long: 'Minor Sixth' },
+    9: { short: 'M6', long: 'Major Sixth' },
+    10: { short: 'm7', long: 'Minor Seventh' },
+    11: { short: 'M7', long: 'Major Seventh' },
+    12: { short: 'P8', long: 'Perfect Octave' }
+};
+
+// Interval progression templates for pedagogical mode
+// Format: { s: semitones, d: direction ('up'/'down') }
+const INTERVAL_TEMPLATES = {
+    easy: {
+        progressions: [
+            [{ s: 2, d: 'up' }, { s: 2, d: 'up' }, { s: 2, d: 'down' }],  // M2↑ M2↑ M2↓
+            [{ s: 2, d: 'up' }, { s: 2, d: 'down' }, { s: 2, d: 'up' }],
+            [{ s: 1, d: 'up' }, { s: 2, d: 'up' }, { s: 1, d: 'down' }],
+            [{ s: 2, d: 'up' }, { s: 2, d: 'up' }, { s: 2, d: 'up' }, { s: 2, d: 'down' }],
+            [{ s: 1, d: 'down' }, { s: 2, d: 'down' }, { s: 2, d: 'up' }]
+        ],
+        single: [1, 2]  // Only minor 2nd and major 2nd
+    },
+    medium: {
+        progressions: [
+            [{ s: 2, d: 'up' }, { s: 3, d: 'up' }, { s: 2, d: 'down' }],  // Mix 2nds and 3rds
+            [{ s: 4, d: 'up' }, { s: 2, d: 'down' }, { s: 3, d: 'down' }],
+            [{ s: 3, d: 'up' }, { s: 4, d: 'up' }, { s: 5, d: 'down' }],  // Add 4ths and 5ths
+            [{ s: 2, d: 'up' }, { s: 3, d: 'up' }, { s: 4, d: 'down' }, { s: 2, d: 'down' }],
+            [{ s: 5, d: 'up' }, { s: 3, d: 'down' }, { s: 4, d: 'up' }]
+        ],
+        single: [1, 2, 3, 4, 5]  // Up to perfect fifth
+    },
+    hard: {
+        progressions: [
+            [{ s: 5, d: 'up' }, { s: 7, d: 'up' }, { s: 4, d: 'down' }],  // Large leaps
+            [{ s: 7, d: 'up' }, { s: 3, d: 'down' }, { s: 5, d: 'up' }],
+            [{ s: 4, d: 'up' }, { s: 7, d: 'up' }, { s: 9, d: 'down' }, { s: 3, d: 'down' }],
+            [{ s: 12, d: 'up' }, { s: 5, d: 'down' }, { s: 7, d: 'up' }],  // Octave leaps
+            [{ s: 6, d: 'up' }, { s: 8, d: 'down' }, { s: 10, d: 'up' }, { s: 11, d: 'down' }]
+        ],
+        single: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  // All intervals including octave
+    }
+};
+
 // ===== STATE =====
 let audioEngine = null; // New audio engine instance
 let currentPattern = [];
@@ -64,7 +116,7 @@ let currentPatternMode = 'pedagogical';
 let syllableSystem = 'western';
 let showNumbers = true;
 let showSyllables = true;
-let practiceMode = 'listen'; // 'listen', 'self-paced', 'test'
+let practiceMode = 'listen'; // 'listen', 'self-paced'
 let playbackSpeed = 1.0;
 let noteDuration = 1000; // milliseconds (1 second default)
 let isPlaying = false;
@@ -75,6 +127,17 @@ let currentLoop = 1;
 let totalLoops = 1;
 let currentInstrument = 'piano'; // Default instrument
 let guessingModeInstrument = 'piano'; // Always use piano for guessing mode
+
+// Interval training state
+let currentTrainingType = 'note'; // 'note' or 'interval'
+let currentIntervalMode = 'progressions'; // 'progressions' or 'single'
+let currentIntervalPattern = []; // Array of interval objects
+let intervalGenerationMode = 'pedagogical'; // 'pedagogical' or 'random'
+let intervalDifficulty = 'medium'; // 'easy', 'medium', 'hard'
+let intervalScale = 'major'; // Separate scale for interval training
+let intervalPatternLength = 1; // Number of intervals in a progression (default 1)
+let intervalNoteGap = 1000; // Gap between two notes within an interval (ms)
+let intervalPatternGap = 1200; // Gap between intervals in a progression (ms)
 
 // ===== DOM ELEMENTS =====
 const elements = {
@@ -124,7 +187,6 @@ const elements = {
     speed: document.getElementById('speed'),
     speedValue: document.getElementById('speed-value'),
     loopCount: document.getElementById('loop-count'),
-    manualMode: document.getElementById('manual-mode'),
 
     // Bookmarks
     bookmarkPatternBtn: document.getElementById('bookmark-pattern-btn'),
@@ -138,7 +200,29 @@ const elements = {
 
     // Pakad Phrases
     pakadSection: document.getElementById('pakad-section'),
-    pakadPhrases: document.getElementById('pakad-phrases')
+    pakadPhrases: document.getElementById('pakad-phrases'),
+
+    // Training Type Toggle
+    noteTrainingBtn: document.getElementById('note-training-btn'),
+    intervalTrainingBtn: document.getElementById('interval-training-btn'),
+    noteTrainingContainer: document.getElementById('note-training-container'),
+    intervalTrainingContainer: document.getElementById('interval-training-container'),
+
+    // Interval Training
+    intervalModeRadios: document.querySelectorAll('input[name="interval-mode"]'),
+    intervalScale: document.getElementById('interval-scale'),
+    intervalPatternMode: document.getElementById('interval-pattern-mode'),
+    intervalDifficultySelect: document.getElementById('interval-difficulty'),
+    patternLength: document.getElementById('pattern-length'),
+    intervalNoteGap: document.getElementById('interval-note-gap'),
+    intervalNoteGapValue: document.getElementById('interval-note-gap-value'),
+    intervalPatternGap: document.getElementById('interval-pattern-gap'),
+    intervalPatternGapValue: document.getElementById('interval-pattern-gap-value'),
+    generateIntervalBtn: document.getElementById('generate-interval-btn'),
+    intervalPatternDisplay: document.getElementById('interval-pattern-display'),
+    intervalStyleRadios: document.querySelectorAll('input[name="interval-style"]'),
+    bookmarkIntervalBtn: document.getElementById('bookmark-interval-btn'),
+    intervalBookmarksList: document.getElementById('interval-bookmarks-list')
 };
 
 // ===== MOBILE AUDIO UNLOCK =====
@@ -315,6 +399,7 @@ function init() {
 
     // Load bookmarks
     loadBookmarks();
+    loadIntervalBookmarks();
 
     // Initialize practice history
     initializePracticeHistory();
@@ -328,7 +413,8 @@ function init() {
     setupGuessingModeListeners();
 
     // Register service worker for PWA support
-    if ('serviceWorker' in navigator) {
+    // TEMPORARILY DISABLED FOR DEVELOPMENT
+    if (false && 'serviceWorker' in navigator) {
         navigator.serviceWorker.register('/service-worker.js')
             .then((registration) => {
                 console.log('Service Worker registered:', registration);
@@ -416,6 +502,141 @@ function setupEventListeners() {
         playbackSpeed = parseFloat(e.target.value);
         elements.speedValue.textContent = playbackSpeed.toFixed(1) + 'x';
     });
+
+    // Training Type Toggle (Note vs Interval)
+    elements.noteTrainingBtn.addEventListener('click', () => {
+        currentTrainingType = 'note';
+        elements.noteTrainingBtn.classList.add('active');
+        elements.intervalTrainingBtn.classList.remove('active');
+        elements.noteTrainingContainer.style.display = 'block';
+        elements.intervalTrainingContainer.style.display = 'none';
+
+        // Toggle bookmark sections
+        document.getElementById('note-bookmarks-section').style.display = 'block';
+        document.getElementById('interval-bookmarks-section').style.display = 'none';
+
+        // Show practice history and coming soon (note training only)
+        document.getElementById('practice-history-section').style.display = 'block';
+        document.getElementById('coming-soon-section').style.display = 'block';
+
+        // Show/hide gap controls in Advanced Controls
+        document.getElementById('interval-note-gap-row').style.display = 'none';
+        document.getElementById('interval-pattern-gap-row').style.display = 'none';
+
+        // Rebuild scale visual for note training mode
+        createScaleVisual();
+
+        resetPlaybackState();
+    });
+
+    elements.intervalTrainingBtn.addEventListener('click', () => {
+        currentTrainingType = 'interval';
+        elements.intervalTrainingBtn.classList.add('active');
+        elements.noteTrainingBtn.classList.remove('active');
+        elements.intervalTrainingContainer.style.display = 'block';
+        elements.noteTrainingContainer.style.display = 'none';
+
+        // Toggle bookmark sections
+        document.getElementById('note-bookmarks-section').style.display = 'none';
+        document.getElementById('interval-bookmarks-section').style.display = 'block';
+
+        // Hide practice history and coming soon (interval training doesn't need them)
+        document.getElementById('practice-history-section').style.display = 'none';
+        document.getElementById('coming-soon-section').style.display = 'none';
+
+        // Show/hide gap controls in Advanced Controls
+        document.getElementById('interval-note-gap-row').style.display = 'flex';
+        document.getElementById('interval-pattern-gap-row').style.display = 'flex';
+
+        // Rebuild scale visual for interval training mode
+        createScaleVisual();
+
+        resetPlaybackState();
+    });
+
+    // Interval Mode Toggle (Progressions vs Single)
+    elements.intervalModeRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            currentIntervalMode = e.target.value;
+            // Clear current pattern when switching modes
+            currentIntervalPattern = [];
+            updateIntervalPatternDisplay();
+
+            // Show/hide pattern length setting
+            const patternLengthRow = document.getElementById('pattern-length-row');
+            if (patternLengthRow) {
+                patternLengthRow.style.display = currentIntervalMode === 'progressions' ? 'flex' : 'none';
+            }
+        });
+    });
+
+    // Interval Pattern Settings
+    if (elements.intervalScale) {
+        elements.intervalScale.addEventListener('change', (e) => {
+            intervalScale = e.target.value;
+            // Update scale visual if we have a pattern
+            if (currentIntervalPattern.length > 0) {
+                updateScaleVisualForIntervals();
+            }
+        });
+    }
+
+    if (elements.intervalPatternMode) {
+        elements.intervalPatternMode.addEventListener('change', (e) => {
+            intervalGenerationMode = e.target.value;
+        });
+    }
+
+    if (elements.intervalDifficultySelect) {
+        elements.intervalDifficultySelect.addEventListener('change', (e) => {
+            intervalDifficulty = e.target.value;
+        });
+    }
+
+    if (elements.patternLength) {
+        elements.patternLength.addEventListener('change', (e) => {
+            intervalPatternLength = parseInt(e.target.value) || 1;
+            // Clamp value between 1 and 12
+            if (intervalPatternLength < 1) intervalPatternLength = 1;
+            if (intervalPatternLength > 12) intervalPatternLength = 12;
+            elements.patternLength.value = intervalPatternLength;
+        });
+    }
+
+    if (elements.intervalNoteGap) {
+        elements.intervalNoteGap.addEventListener('input', (e) => {
+            intervalNoteGap = parseInt(e.target.value);
+            elements.intervalNoteGapValue.textContent = `${intervalNoteGap}ms`;
+        });
+    }
+
+    if (elements.intervalPatternGap) {
+        elements.intervalPatternGap.addEventListener('input', (e) => {
+            intervalPatternGap = parseInt(e.target.value);
+            elements.intervalPatternGapValue.textContent = `${intervalPatternGap}ms`;
+        });
+    }
+
+    // Interval Pattern Generation
+    if (elements.generateIntervalBtn) {
+        elements.generateIntervalBtn.addEventListener('click', () => {
+            generateIntervalPattern();
+            updateIntervalPatternDisplay();
+            enablePlaybackControls();
+            resetPlaybackState();
+            // Enable bookmark button
+            if (elements.bookmarkIntervalBtn) {
+                elements.bookmarkIntervalBtn.disabled = false;
+            }
+        });
+    }
+
+    // Interval Bookmark
+    if (elements.bookmarkIntervalBtn) {
+        elements.bookmarkIntervalBtn.addEventListener('click', () => {
+            bookmarkIntervalPattern();
+        });
+    }
 }
 
 // ===== UTILITY FUNCTIONS =====
@@ -579,6 +800,98 @@ function generateRandomPattern() {
     }
 
     currentPattern = pattern;
+}
+
+// ===== INTERVAL TRAINING GENERATION =====
+
+function generateIntervalPattern() {
+    if (intervalGenerationMode === 'pedagogical') {
+        generatePedagogicalIntervalPattern();
+    } else if (intervalGenerationMode === 'random') {
+        generateRandomIntervalPattern();
+    }
+}
+
+function generatePedagogicalIntervalPattern() {
+    const templates = currentIntervalMode === 'progressions'
+        ? INTERVAL_TEMPLATES[intervalDifficulty].progressions
+        : INTERVAL_TEMPLATES[intervalDifficulty].single;
+
+    if (currentIntervalMode === 'progressions') {
+        // Generate the exact number of intervals requested
+        currentIntervalPattern = [];
+        const template = templates[Math.floor(Math.random() * templates.length)];
+
+        for (let i = 0; i < intervalPatternLength; i++) {
+            // Cycle through the template if needed
+            const templateInterval = template[i % template.length];
+            currentIntervalPattern.push(buildIntervalFromTemplate(templateInterval));
+        }
+    } else {
+        // Single interval mode: pick one interval
+        const semitones = templates[Math.floor(Math.random() * templates.length)];
+        const direction = Math.random() < 0.5 ? 'up' : 'down';
+        currentIntervalPattern = [buildIntervalFromTemplate({ s: semitones, d: direction })];
+    }
+}
+
+function generateRandomIntervalPattern() {
+    const rules = {
+        easy: { maxInterval: 2 },
+        medium: { maxInterval: 5 },
+        hard: { maxInterval: 12 }
+    };
+
+    const rule = rules[intervalDifficulty];
+    const length = currentIntervalMode === 'single' ? 1 : intervalPatternLength;
+
+    currentIntervalPattern = [];
+    for (let i = 0; i < length; i++) {
+        const semitones = 1 + Math.floor(Math.random() * rule.maxInterval);
+        const direction = Math.random() < 0.5 ? 'up' : 'down';
+        currentIntervalPattern.push(buildIntervalFromTemplate({ s: semitones, d: direction }));
+    }
+}
+
+function buildIntervalFromTemplate(template) {
+    const scale = currentTrainingType === 'interval' ? intervalScale : currentScale;
+    const scaleLength = getScaleLength(scale);
+    const scaleData = SCALE_LIBRARY[scale];
+
+    // Pick valid starting note - try to keep intervals within scale range
+    let startNote;
+    if (template.d === 'up') {
+        const maxStart = Math.max(1, scaleLength - Math.ceil(template.s / 2));
+        startNote = 1 + Math.floor(Math.random() * Math.min(maxStart, scaleLength - 1));
+    } else {
+        const minStart = 1 + Math.ceil(template.s / 2);
+        startNote = Math.max(2, Math.min(scaleLength, minStart + Math.floor(Math.random() * 3)));
+    }
+
+    // Calculate end note (approximate with scale degrees)
+    // For simplicity, we'll use chromatic intervals and map to nearest scale degree
+    const scaleDegreeInterval = Math.ceil(template.s / 2); // Rough approximation
+    const endNote = template.d === 'up'
+        ? Math.min(startNote + scaleDegreeInterval, scaleLength)
+        : Math.max(startNote - scaleDegreeInterval, 1);
+
+    // Calculate frequencies using equal temperament
+    const startFreq = BASE_FREQUENCY * scaleData.ratios[(startNote - 1) % scaleLength];
+    const intervalRatio = Math.pow(2, template.s / 12); // Equal temperament semitone ratio
+    const endFreq = template.d === 'up'
+        ? startFreq * intervalRatio
+        : startFreq / intervalRatio;
+
+    return {
+        semitones: template.s,
+        direction: template.d,
+        name: INTERVAL_NAMES_DETAILED[template.s].long,
+        notation: INTERVAL_NAMES_DETAILED[template.s].short,
+        startNote,
+        endNote,
+        startFreq,
+        endFreq
+    };
 }
 
 // ===== CUSTOM PATTERN =====
@@ -787,6 +1100,67 @@ function updatePatternDisplay() {
     elements.patternDisplay.innerHTML = `<span class="pattern-text">${handdrawnText}</span>`;
 }
 
+function intervalNotationToHanddrawn(notation, direction) {
+    // Convert interval notation like "M3" to handdrawn images
+    let html = '';
+
+    // Handle the letter part (M, m, P, TT)
+    if (notation.startsWith('TT')) {
+        // Tritone - use two T's
+        html += '<img src="assets/letter-t.png" class="interval-letter" alt="T">';
+        html += '<img src="assets/letter-t.png" class="interval-letter" alt="T">';
+        notation = notation.substring(2); // Remove "TT"
+    } else if (notation.startsWith('M') || notation.startsWith('m')) {
+        html += '<img src="assets/letter-m.png" class="interval-letter" alt="' + notation[0] + '">';
+        notation = notation.substring(1); // Remove first letter
+    } else if (notation.startsWith('P')) {
+        html += '<img src="assets/letter-p.png" class="interval-letter" alt="P">';
+        notation = notation.substring(1); // Remove "P"
+    }
+
+    // Handle the number part using existing handdrawn digits
+    const digits = notation.split('');
+    digits.forEach(digit => {
+        if (digit >= '0' && digit <= '9') {
+            html += `<span class="handwritten-digit" data-digit="${digit}"></span>`;
+        }
+    });
+
+    // Add arrow
+    const arrowFile = direction === 'up' ? 'arrow-up.png' : 'arrow-down.png';
+    html += `<img src="assets/${arrowFile}" class="interval-arrow" alt="${direction === 'up' ? '↑' : '↓'}">`;
+
+    return html;
+}
+
+function updateIntervalPatternDisplay() {
+    if (currentIntervalPattern.length === 0) {
+        elements.intervalPatternDisplay.innerHTML = '<p class="info-text">Generate a pattern to begin</p>';
+        return;
+    }
+
+    // Build handdrawn interval notation
+    const intervalHtml = currentIntervalPattern.map(iv => {
+        return `<span class="interval-notation">${intervalNotationToHanddrawn(iv.notation, iv.direction)}</span>`;
+    }).join('<span class="interval-spacer">&nbsp;&nbsp;</span>');
+
+    // Build plain English description
+    const plainEnglish = currentIntervalPattern.map(iv => {
+        const direction = iv.direction === 'up' ? 'Up' : 'Down';
+        return `${iv.name} ${direction}`;
+    }).join(', ');
+
+    elements.intervalPatternDisplay.innerHTML = `
+        <div>
+            <div class="pattern-text interval-pattern">${intervalHtml}</div>
+            <div class="interval-plain-english" style="margin-top: 12px; font-size: 0.9em; color: var(--text-muted);">${plainEnglish}</div>
+        </div>
+    `;
+
+    // Update scale visual to show pattern notes in purple
+    updateScaleVisualForIntervals();
+}
+
 function updateScaleInfo() {
     const scale = SCALE_LIBRARY[currentScale];
     let info = scale.name;
@@ -865,20 +1239,15 @@ function handlePracticeModeChange(e) {
         // Show auto-play controls, hide self-paced
         elements.selfPacedControls.style.display = 'none';
         elements.playbackControls.style.display = 'flex';
-    } else if (practiceMode === 'test') {
-        alert('Test mode coming soon!');
-        // Reset to listen mode
-        document.querySelector('input[value="listen"]').checked = true;
-        practiceMode = 'listen';
-        elements.selfPacedControls.style.display = 'none';
-        elements.playbackControls.style.display = 'flex';
     }
 }
 
 // ===== SCALE VISUAL =====
 function createScaleVisual() {
-    const scaleLength = getScaleLength(currentScale);
-    const scale = SCALE_LIBRARY[currentScale];
+    // Use the appropriate scale based on training type
+    const scale = currentTrainingType === 'interval' ? intervalScale : currentScale;
+    const scaleLength = getScaleLength(scale);
+    const scaleData = SCALE_LIBRARY[scale];
 
     elements.scaleVisual.innerHTML = '';
 
@@ -890,7 +1259,12 @@ function createScaleVisual() {
         elements.scaleVisual.appendChild(noteCircle);
     }
 
-    updateScaleVisual();
+    // Always update visual to populate numbers/syllables, and apply pattern highlighting if exists
+    if (currentTrainingType === 'interval') {
+        updateScaleVisualForIntervals();
+    } else {
+        updateScaleVisual();
+    }
 }
 
 function updateScaleVisual() {
@@ -1016,7 +1390,9 @@ async function playNote(noteNumber, duration = 0.5) {
 }
 
 async function playPattern() {
-    if (currentPattern.length === 0) return;
+    // Check which training type and pattern exists
+    if (currentTrainingType === 'note' && currentPattern.length === 0) return;
+    if (currentTrainingType === 'interval' && currentIntervalPattern.length === 0) return;
 
     isPlaying = true;
     currentNoteIndex = 0;
@@ -1031,7 +1407,13 @@ async function playPattern() {
     elements.generateBtn.disabled = true;
 
     updateLoopIndicator();
-    await playNextNote();
+
+    // Route to appropriate playback function
+    if (currentTrainingType === 'note') {
+        await playNextNote();
+    } else {
+        await playNextInterval();
+    }
 }
 
 async function playNextNote() {
@@ -1128,6 +1510,150 @@ function resetPlaybackState() {
 
     highlightNote(-1);
     elements.loopIndicator.textContent = '';
+}
+
+// ===== INTERVAL PLAYBACK =====
+
+async function playNextInterval() {
+    if (!isPlaying) {
+        finishPlayback();
+        return;
+    }
+
+    // Check if pattern is complete
+    if (currentNoteIndex >= currentIntervalPattern.length) {
+        // Check if we should loop again
+        if (currentLoop < totalLoops) {
+            currentLoop++;
+            currentNoteIndex = 0;
+            updateLoopIndicator();
+
+            // Small gap before next loop
+            playbackTimeout = setTimeout(() => playNextInterval(), 500);
+            return;
+        } else {
+            // All loops complete
+            finishPlayback();
+            return;
+        }
+    }
+
+    const interval = currentIntervalPattern[currentNoteIndex];
+
+    // Check playback style (melodic or harmonic)
+    const intervalStyle = document.querySelector('input[name="interval-style"]:checked')?.value || 'melodic';
+
+    if (intervalStyle === 'melodic') {
+        // Play notes sequentially
+        const durationSec = noteDuration / 1000;
+
+        // Highlight and play first note
+        highlightSingleNote(interval.startNote);
+        updateIntervalDisplay(interval);
+        await playNote(interval.startNote, durationSec);
+
+        // Gap between the two notes within the interval
+        await new Promise(resolve => setTimeout(resolve, intervalNoteGap));
+
+        // Highlight and play second note
+        highlightSingleNote(interval.endNote);
+        await playNote(interval.endNote, durationSec);
+
+        currentNoteIndex++;
+
+        // Wait for gap before next interval (only if there are more intervals)
+        if (currentNoteIndex < currentIntervalPattern.length) {
+            const totalDelay = intervalPatternGap / playbackSpeed;
+            playbackTimeout = setTimeout(() => playNextInterval(), totalDelay);
+        } else {
+            // Wait a moment so user can see the last note highlighted before finishing
+            await new Promise(resolve => setTimeout(resolve, 800));
+            finishPlayback();
+        }
+    } else {
+        // Harmonic playback - play both notes together
+        const durationSec = noteDuration / 1000;
+
+        // Highlight both notes for harmonic playback
+        highlightInterval(currentNoteIndex);
+
+        // Play both frequencies simultaneously using audioEngine
+        const startFreq = interval.startFreq;
+        const endFreq = interval.endFreq;
+
+        // Start both notes at the same time (await both to ensure they complete)
+        await Promise.all([
+            audioEngine.playNote(startFreq, durationSec),
+            audioEngine.playNote(endFreq, durationSec)
+        ]);
+
+        currentNoteIndex++;
+
+        // Wait for gap before next interval (only if there are more intervals)
+        if (currentNoteIndex < currentIntervalPattern.length) {
+            const totalDelay = intervalPatternGap / playbackSpeed;
+            playbackTimeout = setTimeout(() => playNextInterval(), totalDelay);
+        } else {
+            // Wait a moment so user can see the last interval highlighted before finishing
+            await new Promise(resolve => setTimeout(resolve, 800));
+            finishPlayback();
+        }
+    }
+}
+
+function highlightSingleNote(noteNumber) {
+    // Highlight only one note at a time (used for melodic playback)
+    const circles = elements.scaleVisual.querySelectorAll('.note-circle');
+    circles.forEach(circle => {
+        circle.classList.remove('active', 'interval-start', 'interval-end');
+    });
+
+    const circle = elements.scaleVisual.querySelector(`[data-note="${noteNumber}"]`);
+    if (circle) {
+        circle.classList.add('active');
+    }
+}
+
+function highlightInterval(intervalIndex) {
+    const circles = elements.scaleVisual.querySelectorAll('.note-circle');
+    circles.forEach(circle => circle.classList.remove('active', 'interval-start', 'interval-end'));
+
+    if (intervalIndex >= 0 && intervalIndex < currentIntervalPattern.length) {
+        const interval = currentIntervalPattern[intervalIndex];
+
+        // Highlight start note
+        const startCircle = elements.scaleVisual.querySelector(`[data-note="${interval.startNote}"]`);
+        if (startCircle) {
+            startCircle.classList.add('active', 'interval-start');
+        }
+
+        // Highlight end note
+        const endCircle = elements.scaleVisual.querySelector(`[data-note="${interval.endNote}"]`);
+        if (endCircle) {
+            endCircle.classList.add('active', 'interval-end');
+        }
+
+        // Update interval display
+        updateIntervalDisplay(interval);
+    } else {
+        // Clear interval display when not playing
+        const intervalDisplay = document.getElementById('interval-display');
+        if (intervalDisplay) {
+            intervalDisplay.innerHTML = '';
+        }
+    }
+}
+
+function updateIntervalDisplay(interval) {
+    const intervalDisplay = document.getElementById('interval-display');
+    if (!intervalDisplay) return;
+
+    const arrow = interval.direction === 'up' ? '↑' : '↓';
+    intervalDisplay.innerHTML = `
+        <span class="interval-arrow" style="font-size: 1.5em; color: var(--accent);">${arrow}</span>
+        <span class="interval-name" style="font-weight: 600; margin: 0 8px;">${interval.notation}</span>
+        <span class="interval-long-name" style="color: var(--text-muted);">(${interval.name})</span>
+    `;
 }
 
 function updateLoopIndicator() {
@@ -1323,6 +1849,197 @@ function deleteBookmark(id) {
 
     localStorage.setItem('earTrainingBookmarks', JSON.stringify(filtered));
     loadBookmarks();
+}
+
+// ===== INTERVAL VISUAL UPDATES =====
+
+function updateScaleVisualForIntervals() {
+    const scaleLength = getScaleLength(intervalScale);
+    const scale = SCALE_LIBRARY[intervalScale];
+
+    // Recreate if scale length changed
+    const currentCircles = elements.scaleVisual.querySelectorAll('.note-circle').length;
+    if (currentCircles !== scaleLength) {
+        createScaleVisual();
+        return;
+    }
+
+    const circles = elements.scaleVisual.querySelectorAll('.note-circle');
+
+    circles.forEach((circle, idx) => {
+        const noteNum = idx + 1;
+        circle.classList.remove('in-pattern', 'active', 'interval-start', 'interval-end');
+
+        // Build display content (always show numbers for intervals)
+        let content = '';
+        const handdrawnNum = numberToHanddrawn(noteNum);
+        content += `<div class="note-number">${handdrawnNum}</div>`;
+
+        if (showSyllables) {
+            const syllable = scale.solfege[syllableSystem][idx];
+            content += `<div class="note-name">${syllable}</div>`;
+        }
+
+        circle.innerHTML = content;
+
+        // Mark notes that appear in ANY interval in the pattern
+        const isInPattern = currentIntervalPattern.some(interval =>
+            interval.startNote === noteNum || interval.endNote === noteNum
+        );
+
+        if (isInPattern) {
+            circle.classList.add('in-pattern');
+        }
+    });
+}
+
+// ===== INTERVAL BOOKMARKS =====
+function bookmarkIntervalPattern() {
+    if (currentIntervalPattern.length === 0) return;
+
+    const bookmark = {
+        id: Date.now(),
+        intervalPattern: currentIntervalPattern.map(iv => ({
+            semitones: iv.semitones,
+            direction: iv.direction,
+            notation: iv.notation
+        })),
+        intervalMode: currentIntervalMode,
+        difficulty: intervalDifficulty,
+        generationMode: intervalGenerationMode,
+        date: new Date().toISOString()
+    };
+
+    // Get existing interval bookmarks
+    const bookmarks = getIntervalBookmarks();
+
+    // Add new bookmark at the beginning
+    bookmarks.unshift(bookmark);
+
+    // Limit to 20 bookmarks
+    if (bookmarks.length > 20) {
+        bookmarks.pop();
+    }
+
+    // Save to localStorage
+    localStorage.setItem('earTrainingIntervalBookmarks', JSON.stringify(bookmarks));
+
+    // Visual feedback
+    if (elements.bookmarkIntervalBtn) {
+        elements.bookmarkIntervalBtn.textContent = 'Bookmarked!';
+        elements.bookmarkIntervalBtn.classList.add('bookmarked');
+        setTimeout(() => {
+            elements.bookmarkIntervalBtn.textContent = 'Bookmark This Pattern';
+            elements.bookmarkIntervalBtn.classList.remove('bookmarked');
+        }, 2000);
+    }
+
+    // Reload interval bookmarks display
+    loadIntervalBookmarks();
+}
+
+function getIntervalBookmarks() {
+    const stored = localStorage.getItem('earTrainingIntervalBookmarks');
+    return stored ? JSON.parse(stored) : [];
+}
+
+function loadIntervalBookmarks() {
+    const bookmarks = getIntervalBookmarks();
+
+    if (!elements.intervalBookmarksList) return;
+
+    if (bookmarks.length === 0) {
+        elements.intervalBookmarksList.innerHTML = '<p class="info-text">No bookmarked intervals yet</p>';
+        return;
+    }
+
+    elements.intervalBookmarksList.innerHTML = '';
+
+    bookmarks.forEach(bookmark => {
+        const item = document.createElement('div');
+        item.className = 'bookmark-item';
+
+        const date = new Date(bookmark.date);
+        const dateStr = date.toLocaleDateString();
+
+        const patternStr = bookmark.intervalPattern.map(iv => {
+            const arrow = iv.direction === 'up' ? '↑' : '↓';
+            return `${iv.notation}${arrow}`;
+        }).join(' ');
+
+        item.innerHTML = `
+            <div class="bookmark-info">
+                <span class="bookmark-pattern">${patternStr}</span>
+                <span class="bookmark-meta">${bookmark.intervalMode} • ${bookmark.difficulty} • ${dateStr}</span>
+            </div>
+            <div class="bookmark-actions">
+                <button class="btn btn-small load-interval-bookmark-btn" data-id="${bookmark.id}">Load</button>
+                <button class="btn btn-small btn-danger delete-interval-bookmark-btn" data-id="${bookmark.id}">Delete</button>
+            </div>
+        `;
+
+        elements.intervalBookmarksList.appendChild(item);
+    });
+
+    // Add event listeners
+    const loadBtns = elements.intervalBookmarksList.querySelectorAll('.load-interval-bookmark-btn');
+    loadBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.dataset.id);
+            loadIntervalBookmark(id);
+        });
+    });
+
+    const deleteBtns = elements.intervalBookmarksList.querySelectorAll('.delete-interval-bookmark-btn');
+    deleteBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = parseInt(e.target.dataset.id);
+            deleteIntervalBookmark(id);
+        });
+    });
+}
+
+function loadIntervalBookmark(id) {
+    const bookmarks = getIntervalBookmarks();
+    const bookmark = bookmarks.find(b => b.id === id);
+
+    if (!bookmark) return;
+
+    // Rebuild full interval pattern from bookmark
+    currentIntervalPattern = bookmark.intervalPattern.map(iv => buildIntervalFromTemplate({
+        s: iv.semitones,
+        d: iv.direction
+    }));
+
+    currentIntervalMode = bookmark.intervalMode;
+    intervalDifficulty = bookmark.difficulty;
+    intervalGenerationMode = bookmark.generationMode;
+
+    // Update UI
+    if (elements.intervalDifficultySelect) {
+        elements.intervalDifficultySelect.value = bookmark.difficulty;
+    }
+    if (elements.intervalPatternMode) {
+        elements.intervalPatternMode.value = bookmark.generationMode;
+    }
+
+    // Update interval mode radio
+    const modeRadio = document.querySelector(`input[name="interval-mode"][value="${bookmark.intervalMode}"]`);
+    if (modeRadio) {
+        modeRadio.checked = true;
+    }
+
+    updateIntervalPatternDisplay();
+    enablePlaybackControls();
+    resetPlaybackState();
+}
+
+function deleteIntervalBookmark(id) {
+    const bookmarks = getIntervalBookmarks();
+    const filtered = bookmarks.filter(b => b.id !== id);
+
+    localStorage.setItem('earTrainingIntervalBookmarks', JSON.stringify(filtered));
+    loadIntervalBookmarks();
 }
 
 // ===== PRACTICE HISTORY =====
@@ -1620,8 +2337,30 @@ function setupGuessTypeToggle() {
 }
 
 // Note Guessing Functions
-function playMysteryNote() {
-    console.log('playMysteryNote called!');
+function playCurrentMysteryNote() {
+    console.log('playCurrentMysteryNote called!');
+    const state = guessState.note;
+
+    // If no mystery note exists yet, generate one
+    if (!state.mysteryNote) {
+        state.mysteryNote = Math.floor(Math.random() * 7) + 1;
+        console.log('Generated new mystery note:', state.mysteryNote);
+    }
+
+    // Temporarily set instrument to piano for guessing mode
+    const previousInstrument = currentInstrument;
+    currentInstrument = 'piano';
+    if (audioEngine) {
+        audioEngine.setInstrument('piano');
+    }
+
+    // Play the current mystery note
+    console.log('Playing mystery note:', state.mysteryNote);
+    playNote(state.mysteryNote, 1.0);
+}
+
+function resetMysteryNote() {
+    console.log('resetMysteryNote called!');
     const state = guessState.note;
 
     // Reset state for new question
@@ -1646,22 +2385,7 @@ function playMysteryNote() {
         revealBtn.style.display = 'inline-block';
     }
 
-    // Generate random note (1-7 for major scale)
-    state.mysteryNote = Math.floor(Math.random() * 7) + 1;
-
-    console.log('Playing mystery note:', state.mysteryNote);
-
-    // Temporarily set instrument to piano for guessing mode
-    const previousInstrument = currentInstrument;
-    currentInstrument = 'piano';
-    if (audioEngine) {
-        audioEngine.setInstrument('piano');
-    }
-
-    // Small delay to ensure UI reset before playing
-    setTimeout(() => {
-        playNote(state.mysteryNote, 1.0);
-    }, 50);
+    console.log('Mystery note reset. Click Play Mystery Note to generate a new one.');
 }
 
 function guessNote(guessedNote) {
@@ -1748,29 +2472,71 @@ function getIntervalDifficulty() {
     return intervals[difficulty] || intervals.medium;
 }
 
-async function playMysteryInterval() {
+async function playCurrentMysteryInterval() {
     const state = guessState.interval;
     if (state.answered) return;
 
-    // Get available intervals based on difficulty
-    const availableIntervals = getIntervalDifficulty();
-    state.mysteryInterval = availableIntervals[Math.floor(Math.random() * availableIntervals.length)];
+    // If no mystery interval exists yet, generate one
+    if (state.mysteryInterval === null) {
+        // Get available intervals based on difficulty
+        const availableIntervals = getIntervalDifficulty();
+        state.mysteryInterval = availableIntervals[Math.floor(Math.random() * availableIntervals.length)];
 
-    // Generate two notes
-    state.note1 = Math.floor(Math.random() * 4) + 1; // Start from 1-4
-    state.note2 = state.note1 + state.mysteryInterval;
+        // Generate starting note (always 1 for consistency)
+        state.note1 = 1;
 
-    // Make sure note2 is within scale
-    if (state.note2 > 7) {
-        state.note1 = Math.max(1, 7 - state.mysteryInterval);
-        state.note2 = state.note1 + state.mysteryInterval;
+        console.log('Generated interval:', state.mysteryInterval, 'semitones from note', state.note1);
     }
 
-    // Play both notes in sequence
-    await playNote(state.note1, 0.8);
-    setTimeout(() => {
-        playNote(state.note2, 0.8);
-    }, 900);
+    // Calculate frequencies based on semitones (equal temperament)
+    const scale = SCALE_LIBRARY[currentScale];
+    const freq1 = BASE_FREQUENCY * scale.ratios[state.note1 - 1];
+    const freq2 = freq1 * Math.pow(2, state.mysteryInterval / 12); // Semitone ratio
+
+    console.log('Playing interval:', state.mysteryInterval, 'semitones, freq1:', freq1, 'freq2:', freq2);
+
+    // Play both notes in sequence using frequencies directly
+    if (audioEngine) {
+        await audioEngine.playNote(freq1, 0.8);
+        setTimeout(() => {
+            audioEngine.playNote(freq2, 0.8);
+        }, 900);
+    }
+}
+
+function resetMysteryInterval() {
+    console.log('resetMysteryInterval called!');
+    const state = guessState.interval;
+
+    // Reset state for new question
+    state.mysteryInterval = null;
+    state.note1 = null;
+    state.answered = false;
+
+    // Reset UI
+    const buttons = document.querySelectorAll('.interval-guess-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('correct', 'incorrect');
+        btn.disabled = false;
+    });
+
+    const feedback = document.getElementById('interval-feedback');
+    if (feedback) {
+        feedback.textContent = '';
+        feedback.className = 'guess-feedback';
+    }
+
+    const revealBtn = document.getElementById('reveal-interval-btn');
+    if (revealBtn) {
+        revealBtn.style.display = 'inline-block';
+    }
+
+    const nextBtn = document.getElementById('next-interval-btn');
+    if (nextBtn) {
+        nextBtn.style.display = 'none';
+    }
+
+    console.log('Mystery interval reset. Click Play Mystery Interval to generate a new one.');
 }
 
 function guessInterval(guessedInterval) {
@@ -1903,7 +2669,12 @@ function setupGuessingModeListeners() {
     const playBtn = document.getElementById('play-mystery-note');
     console.log('Play button found:', playBtn);
     if (playBtn) {
-        playBtn.addEventListener('click', playMysteryNote);
+        playBtn.addEventListener('click', playCurrentMysteryNote);
+    }
+
+    const resetNoteBtn = document.getElementById('reset-mystery-note');
+    if (resetNoteBtn) {
+        resetNoteBtn.addEventListener('click', resetMysteryNote);
     }
 
     const revealBtn = document.getElementById('reveal-note-btn');
@@ -1923,7 +2694,8 @@ function setupGuessingModeListeners() {
     });
 
     // Interval guessing
-    document.getElementById('play-mystery-interval').addEventListener('click', playMysteryInterval);
+    document.getElementById('play-mystery-interval').addEventListener('click', playCurrentMysteryInterval);
+    document.getElementById('reset-mystery-interval').addEventListener('click', resetMysteryInterval);
     document.getElementById('reveal-interval-btn').addEventListener('click', revealIntervalAnswer);
     document.getElementById('next-interval-btn').addEventListener('click', nextIntervalQuestion);
     document.getElementById('restart-interval-btn').addEventListener('click', restartIntervalGame);
