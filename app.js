@@ -868,19 +868,24 @@ function buildIntervalFromTemplate(template) {
         startNote = Math.max(2, Math.min(scaleLength, minStart + Math.floor(Math.random() * 3)));
     }
 
-    // Calculate end note (approximate with scale degrees)
-    // For simplicity, we'll use chromatic intervals and map to nearest scale degree
+    // Calculate end note (can go beyond scaleLength for octaves)
+    // For display purposes - actual frequency is calculated separately
     const scaleDegreeInterval = Math.ceil(template.s / 2); // Rough approximation
     const endNote = template.d === 'up'
-        ? Math.min(startNote + scaleDegreeInterval, scaleLength)
-        : Math.max(startNote - scaleDegreeInterval, 1);
+        ? startNote + scaleDegreeInterval  // Allow > 7 for octave-up notes
+        : Math.max(startNote - scaleDegreeInterval, 1);  // Clamp at 1 for down
 
-    // Calculate frequencies using equal temperament
-    const startFreq = BASE_FREQUENCY * scaleData.ratios[(startNote - 1) % scaleLength];
-    const intervalRatio = Math.pow(2, template.s / 12); // Equal temperament semitone ratio
-    const endFreq = template.d === 'up'
-        ? startFreq * intervalRatio
-        : startFreq / intervalRatio;
+    // Calculate frequencies using pure equal temperament
+    // For interval training, we use ET exclusively for consistent intervals across all starting notes
+    // Map scale degree to semitones above base (for major scale: 1=0, 2=2, 3=4, 4=5, 5=7, 6=9, 7=11)
+    const scaleSemitones = [0, 2, 4, 5, 7, 9, 11]; // Major scale pattern
+    const startSemitone = scaleSemitones[(startNote - 1) % scaleSemitones.length];
+
+    const startFreq = BASE_FREQUENCY * Math.pow(2, startSemitone / 12);
+    const endSemitone = template.d === 'up'
+        ? startSemitone + template.s
+        : startSemitone - template.s;
+    const endFreq = BASE_FREQUENCY * Math.pow(2, endSemitone / 12);
 
     return {
         semitones: template.s,
@@ -1605,32 +1610,51 @@ function highlightSingleNote(noteNumber) {
     // Highlight only one note at a time (used for melodic playback)
     const circles = elements.scaleVisual.querySelectorAll('.note-circle');
     circles.forEach(circle => {
-        circle.classList.remove('active', 'interval-start', 'interval-end');
+        circle.classList.remove('active', 'interval-start', 'interval-end', 'octave-up');
     });
 
-    const circle = elements.scaleVisual.querySelector(`[data-note="${noteNumber}"]`);
+    // Map notes > 7 to 1-7 range (8→1, 9→2, etc.)
+    const scaleLength = getScaleLength(currentTrainingType === 'interval' ? intervalScale : currentScale);
+    const isOctaveUp = noteNumber > scaleLength;
+    const displayNote = isOctaveUp ? ((noteNumber - 1) % scaleLength) + 1 : noteNumber;
+
+    const circle = elements.scaleVisual.querySelector(`[data-note="${displayNote}"]`);
     if (circle) {
         circle.classList.add('active');
+        if (isOctaveUp) {
+            circle.classList.add('octave-up');
+        }
     }
 }
 
 function highlightInterval(intervalIndex) {
     const circles = elements.scaleVisual.querySelectorAll('.note-circle');
-    circles.forEach(circle => circle.classList.remove('active', 'interval-start', 'interval-end'));
+    circles.forEach(circle => circle.classList.remove('active', 'interval-start', 'interval-end', 'octave-up'));
 
     if (intervalIndex >= 0 && intervalIndex < currentIntervalPattern.length) {
         const interval = currentIntervalPattern[intervalIndex];
+        const scaleLength = getScaleLength(currentTrainingType === 'interval' ? intervalScale : currentScale);
 
-        // Highlight start note
-        const startCircle = elements.scaleVisual.querySelector(`[data-note="${interval.startNote}"]`);
+        // Highlight start note (map to 1-7 if needed)
+        const isStartOctaveUp = interval.startNote > scaleLength;
+        const displayStartNote = isStartOctaveUp ? ((interval.startNote - 1) % scaleLength) + 1 : interval.startNote;
+        const startCircle = elements.scaleVisual.querySelector(`[data-note="${displayStartNote}"]`);
         if (startCircle) {
             startCircle.classList.add('active', 'interval-start');
+            if (isStartOctaveUp) {
+                startCircle.classList.add('octave-up');
+            }
         }
 
-        // Highlight end note
-        const endCircle = elements.scaleVisual.querySelector(`[data-note="${interval.endNote}"]`);
+        // Highlight end note (map to 1-7 if needed)
+        const isEndOctaveUp = interval.endNote > scaleLength;
+        const displayEndNote = isEndOctaveUp ? ((interval.endNote - 1) % scaleLength) + 1 : interval.endNote;
+        const endCircle = elements.scaleVisual.querySelector(`[data-note="${displayEndNote}"]`);
         if (endCircle) {
             endCircle.classList.add('active', 'interval-end');
+            if (isEndOctaveUp) {
+                endCircle.classList.add('octave-up');
+            }
         }
 
         // Update interval display
@@ -1868,7 +1892,7 @@ function updateScaleVisualForIntervals() {
 
     circles.forEach((circle, idx) => {
         const noteNum = idx + 1;
-        circle.classList.remove('in-pattern', 'active', 'interval-start', 'interval-end');
+        circle.classList.remove('in-pattern', 'active', 'interval-start', 'interval-end', 'octave-up');
 
         // Build display content (always show numbers for intervals)
         let content = '';
@@ -1883,12 +1907,39 @@ function updateScaleVisualForIntervals() {
         circle.innerHTML = content;
 
         // Mark notes that appear in ANY interval in the pattern
-        const isInPattern = currentIntervalPattern.some(interval =>
-            interval.startNote === noteNum || interval.endNote === noteNum
-        );
+        // Check both regular note and octave-up notes (8→1, 9→2, etc.)
+        let isInPattern = false;
+        let isOctaveUp = false;
+
+        currentIntervalPattern.forEach(interval => {
+            // Check start note
+            if (interval.startNote === noteNum) {
+                isInPattern = true;
+            } else if (interval.startNote > scaleLength) {
+                const wrappedStart = ((interval.startNote - 1) % scaleLength) + 1;
+                if (wrappedStart === noteNum) {
+                    isInPattern = true;
+                    isOctaveUp = true;
+                }
+            }
+
+            // Check end note
+            if (interval.endNote === noteNum) {
+                isInPattern = true;
+            } else if (interval.endNote > scaleLength) {
+                const wrappedEnd = ((interval.endNote - 1) % scaleLength) + 1;
+                if (wrappedEnd === noteNum) {
+                    isInPattern = true;
+                    isOctaveUp = true;
+                }
+            }
+        });
 
         if (isInPattern) {
             circle.classList.add('in-pattern');
+            if (isOctaveUp) {
+                circle.classList.add('octave-up');
+            }
         }
     });
 }

@@ -791,6 +791,19 @@ body::after {
     background-image: url('../assets/note-circle-active.png');
 }
 
+/* Octave-up note circles (filled versions for notes 8+) */
+.note-circle.in-pattern.octave-up:not(.active) {
+    background-image: url('../assets/note-circle-pattern-octup.png');
+}
+
+.note-circle.active.octave-up {
+    background-image: url('../assets/note-circle-active-octup.png');
+}
+
+.note-circle.in-pattern.active.octave-up {
+    background-image: url('../assets/note-circle-active-octup.png');
+}
+
 /* Pattern Input Boxes - styles defined earlier in file */
 
 /* Notebook Paper Background for Pattern Display */
