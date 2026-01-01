@@ -138,6 +138,7 @@ let intervalScale = 'major'; // Separate scale for interval training
 let intervalPatternLength = 1; // Number of intervals in a progression (default 1)
 let intervalNoteGap = 1000; // Gap between two notes within an interval (ms)
 let intervalPatternGap = 1200; // Gap between intervals in a progression (ms)
+let currentIntervalNoteIndex = 0; // For self-paced: 0 = start note, 1 = end note
 
 // ===== DOM ELEMENTS =====
 const elements = {
@@ -1240,7 +1241,11 @@ function handlePracticeModeChange(e) {
         elements.playbackControls.style.display = 'none';
 
         // If pattern exists, start self-paced mode
-        if (currentPattern.length > 0) {
+        const hasPattern = currentTrainingType === 'interval'
+            ? currentIntervalPattern.length > 0
+            : currentPattern.length > 0;
+
+        if (hasPattern) {
             startSelfPacedMode();
         }
     } else if (practiceMode === 'listen') {
@@ -1644,25 +1649,46 @@ function highlightInterval(intervalIndex) {
         const interval = currentIntervalPattern[intervalIndex];
         const scaleLength = getScaleLength(currentTrainingType === 'interval' ? intervalScale : currentScale);
 
+        // In self-paced mode, only highlight the current note (start or end)
+        // In listen mode, highlight both notes
+        const isSelfPaced = practiceMode === 'self-paced';
+
         // Highlight start note (map to 1-7 if needed)
         const isStartOctaveUp = interval.startNote > scaleLength;
         const displayStartNote = isStartOctaveUp ? ((interval.startNote - 1) % scaleLength) + 1 : interval.startNote;
         const startCircle = elements.scaleVisual.querySelector(`[data-note="${displayStartNote}"]`);
-        if (startCircle) {
-            startCircle.classList.add('active', 'interval-start');
-            if (isStartOctaveUp) {
-                startCircle.classList.add('octave-up');
-            }
-        }
 
         // Highlight end note (map to 1-7 if needed)
         const isEndOctaveUp = interval.endNote > scaleLength;
         const displayEndNote = isEndOctaveUp ? ((interval.endNote - 1) % scaleLength) + 1 : interval.endNote;
         const endCircle = elements.scaleVisual.querySelector(`[data-note="${displayEndNote}"]`);
-        if (endCircle) {
-            endCircle.classList.add('active', 'interval-end');
-            if (isEndOctaveUp) {
-                endCircle.classList.add('octave-up');
+
+        if (isSelfPaced) {
+            // Only highlight the current note being played
+            if (currentIntervalNoteIndex === 0 && startCircle) {
+                startCircle.classList.add('active');
+                if (isStartOctaveUp) {
+                    startCircle.classList.add('octave-up');
+                }
+            } else if (currentIntervalNoteIndex === 1 && endCircle) {
+                endCircle.classList.add('active');
+                if (isEndOctaveUp) {
+                    endCircle.classList.add('octave-up');
+                }
+            }
+        } else {
+            // Listen mode: highlight both notes
+            if (startCircle) {
+                startCircle.classList.add('active', 'interval-start');
+                if (isStartOctaveUp) {
+                    startCircle.classList.add('octave-up');
+                }
+            }
+            if (endCircle) {
+                endCircle.classList.add('active', 'interval-end');
+                if (isEndOctaveUp) {
+                    endCircle.classList.add('octave-up');
+                }
             }
         }
 
@@ -1706,6 +1732,7 @@ function enablePlaybackControls() {
 // ===== SELF-PACED MODE =====
 function startSelfPacedMode() {
     currentNoteIndex = 0;
+    currentIntervalNoteIndex = 0;
     lastNote = null;
 
     // Highlight first note
@@ -1724,19 +1751,9 @@ function checkCurrentNote() {
         const interval = currentIntervalPattern[currentNoteIndex];
         const durationSec = noteDuration / 1000;
 
-        // Play the interval (melodic or harmonic based on settings)
-        const intervalStyle = document.querySelector('input[name="interval-style"]:checked')?.value || 'melodic';
-
-        if (intervalStyle === 'melodic') {
-            playNote(interval.startNote, durationSec);
-            setTimeout(() => {
-                playNote(interval.endNote, durationSec);
-            }, noteDuration + 150);
-        } else {
-            // Harmonic - play both notes together
-            audioEngine.playNote(interval.startFreq, durationSec);
-            audioEngine.playNote(interval.endFreq, durationSec);
-        }
+        // In self-paced mode, play only the current note (start or end)
+        const noteToPlay = currentIntervalNoteIndex === 0 ? interval.startNote : interval.endNote;
+        playNote(noteToPlay, durationSec);
     } else {
         if (currentNoteIndex >= currentPattern.length) return;
 
@@ -1749,26 +1766,45 @@ function checkCurrentNote() {
 }
 
 function moveToNextNote() {
-    const patternLength = currentTrainingType === 'interval'
-        ? currentIntervalPattern.length
-        : currentPattern.length;
+    if (currentTrainingType === 'interval') {
+        // In interval mode, toggle between start and end notes
+        if (currentIntervalNoteIndex === 0) {
+            // Move from start to end note of current interval
+            currentIntervalNoteIndex = 1;
+        } else {
+            // Move to next interval's start note
+            currentIntervalNoteIndex = 0;
+            currentNoteIndex++;
 
-    if (currentNoteIndex >= patternLength - 1) {
-        // Pattern complete
-        currentNoteIndex = patternLength;
-        elements.checkNoteBtn.disabled = true;
-        elements.nextNoteBtn.disabled = true;
-        highlightNote(-1); // Clear highlight
-        return;
+            // Check if pattern complete
+            if (currentNoteIndex >= currentIntervalPattern.length) {
+                elements.checkNoteBtn.disabled = true;
+                elements.nextNoteBtn.disabled = true;
+                highlightNote(-1);
+                return;
+            }
+        }
+        highlightNote(currentNoteIndex);
+    } else {
+        // Note training mode
+        const patternLength = currentPattern.length;
+
+        if (currentNoteIndex >= patternLength - 1) {
+            currentNoteIndex = patternLength;
+            elements.checkNoteBtn.disabled = true;
+            elements.nextNoteBtn.disabled = true;
+            highlightNote(-1);
+            return;
+        }
+
+        currentNoteIndex++;
+        highlightNote(currentNoteIndex);
     }
-
-    // Move to next note/interval
-    currentNoteIndex++;
-    highlightNote(currentNoteIndex);
 }
 
 function restartSelfPaced() {
     currentNoteIndex = 0;
+    currentIntervalNoteIndex = 0;
     lastNote = null;
     highlightNote(0);
     elements.checkNoteBtn.disabled = false;
@@ -2476,6 +2512,11 @@ function resetMysteryNote() {
         revealBtn.style.display = 'inline-block';
     }
 
+    const nextBtn = document.getElementById('next-question-note-btn');
+    if (nextBtn) {
+        nextBtn.style.display = 'none';
+    }
+
     console.log('Mystery note reset. Click Play Mystery Note to generate a new one.');
 }
 
@@ -2518,10 +2559,15 @@ function guessNote(guessedNote) {
         }
     }
 
-    // Hide reveal button after answering
+    // Hide reveal button, show next button after answering
     const revealBtn = document.getElementById('reveal-note-btn');
     if (revealBtn) {
         revealBtn.style.display = 'none';
+    }
+
+    const nextBtn = document.getElementById('next-question-note-btn');
+    if (nextBtn) {
+        nextBtn.style.display = 'inline-block';
     }
 
     console.log('guessNote completed');
@@ -2548,8 +2594,13 @@ function revealNoteAnswer() {
     feedback.textContent = `The note was ${state.mysteryNote}`;
     feedback.className = 'guess-feedback';
 
-    // Hide reveal button
+    // Hide reveal button, show next button
     document.getElementById('reveal-note-btn').style.display = 'none';
+
+    const nextBtn = document.getElementById('next-question-note-btn');
+    if (nextBtn) {
+        nextBtn.style.display = 'inline-block';
+    }
 }
 
 // Interval Guessing Functions
@@ -2771,6 +2822,11 @@ function setupGuessingModeListeners() {
     const revealBtn = document.getElementById('reveal-note-btn');
     if (revealBtn) {
         revealBtn.addEventListener('click', revealNoteAnswer);
+    }
+
+    const nextQuestionNoteBtn = document.getElementById('next-question-note-btn');
+    if (nextQuestionNoteBtn) {
+        nextQuestionNoteBtn.addEventListener('click', resetMysteryNote);
     }
 
     const guessButtons = document.querySelectorAll('.note-guess-btn');
