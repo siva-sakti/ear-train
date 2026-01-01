@@ -1502,7 +1502,6 @@ body::after {
 }
 
 .tuner-display {
-    background: var(--surface);
     padding: 32px;
     text-align: center;
     margin: 24px 0;
@@ -1523,18 +1522,18 @@ body::after {
 }
 
 .tuner-dot.in-tune {
-    background: #4CAF50;
-    box-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
+    background: #A8E6A3;
+    box-shadow: 0 0 12px rgba(168, 230, 163, 0.6);
 }
 
 .tuner-dot.close {
-    background: #FFC107;
-    box-shadow: 0 0 12px rgba(255, 193, 7, 0.6);
+    background: #FFE082;
+    box-shadow: 0 0 12px rgba(255, 224, 130, 0.6);
 }
 
 .tuner-dot.off {
-    background: #F44336;
-    box-shadow: 0 0 12px rgba(244, 67, 54, 0.6);
+    background: #FFABAB;
+    box-shadow: 0 0 12px rgba(255, 171, 171, 0.6);
 }
 
 .tuner-note-images {
@@ -1547,20 +1546,21 @@ body::after {
 }
 
 .tuner-note-images img {
-    height: 60px;
     width: auto;
 }
 
 .tuner-note-images .note-letter {
-    height: 70px;
+    height: 80px;
 }
 
 .tuner-note-images .accidental {
-    height: 50px;
+    height: 55px;
+    margin-top: 8px;
 }
 
 .tuner-note-images .octave-num {
-    height: 50px;
+    height: 45px;
+    margin-top: 12px;
 }
 
 .tuner-placeholder {

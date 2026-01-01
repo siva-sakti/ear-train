@@ -2347,23 +2347,29 @@ let guessState = {
 function setupModeToggle() {
     const trainingBtn = document.getElementById('training-mode-btn');
     const guessingBtn = document.getElementById('guessing-mode-btn');
+    const tunerBtn = document.getElementById('tuner-mode-btn');
     const trainingContainer = document.getElementById('training-mode-container');
     const guessingContainer = document.getElementById('guessing-mode-container');
+    const tunerContainer = document.getElementById('tuner-mode-container');
 
     trainingBtn.addEventListener('click', () => {
         currentMode = 'training';
         trainingBtn.classList.add('active');
         guessingBtn.classList.remove('active');
+        tunerBtn.classList.remove('active');
         trainingContainer.style.display = 'block';
         guessingContainer.style.display = 'none';
+        tunerContainer.style.display = 'none';
     });
 
     guessingBtn.addEventListener('click', () => {
         currentMode = 'guessing';
         guessingBtn.classList.add('active');
         trainingBtn.classList.remove('active');
+        tunerBtn.classList.remove('active');
         trainingContainer.style.display = 'none';
         guessingContainer.style.display = 'block';
+        tunerContainer.style.display = 'none';
     });
 }
 
@@ -2809,6 +2815,8 @@ function setupTunerMode() {
 }
 
 function showTunerMode() {
+    currentMode = 'tuner';
+
     // Hide other modes
     document.getElementById('training-mode-container').style.display = 'none';
     document.getElementById('guessing-mode-container').style.display = 'none';
