@@ -1315,6 +1315,12 @@ function updateScaleVisual() {
 }
 
 function highlightNote(noteIndex) {
+    // Route to highlightInterval for interval training
+    if (currentTrainingType === 'interval') {
+        highlightInterval(noteIndex);
+        return;
+    }
+
     const circles = elements.scaleVisual.querySelectorAll('.note-circle');
     circles.forEach(circle => circle.classList.remove('active'));
 
@@ -1712,26 +1718,51 @@ function startSelfPacedMode() {
 }
 
 function checkCurrentNote() {
-    if (currentNoteIndex >= currentPattern.length) return;
+    if (currentTrainingType === 'interval') {
+        if (currentNoteIndex >= currentIntervalPattern.length) return;
 
-    const note = currentPattern[currentNoteIndex];
-    const durationSec = noteDuration / 1000;
+        const interval = currentIntervalPattern[currentNoteIndex];
+        const durationSec = noteDuration / 1000;
 
-    // Play the current note on demand
-    playNote(note, durationSec);
+        // Play the interval (melodic or harmonic based on settings)
+        const intervalStyle = document.querySelector('input[name="interval-style"]:checked')?.value || 'melodic';
+
+        if (intervalStyle === 'melodic') {
+            playNote(interval.startNote, durationSec);
+            setTimeout(() => {
+                playNote(interval.endNote, durationSec);
+            }, noteDuration + 150);
+        } else {
+            // Harmonic - play both notes together
+            audioEngine.playNote(interval.startFreq, durationSec);
+            audioEngine.playNote(interval.endFreq, durationSec);
+        }
+    } else {
+        if (currentNoteIndex >= currentPattern.length) return;
+
+        const note = currentPattern[currentNoteIndex];
+        const durationSec = noteDuration / 1000;
+
+        // Play the current note on demand
+        playNote(note, durationSec);
+    }
 }
 
 function moveToNextNote() {
-    if (currentNoteIndex >= currentPattern.length - 1) {
+    const patternLength = currentTrainingType === 'interval'
+        ? currentIntervalPattern.length
+        : currentPattern.length;
+
+    if (currentNoteIndex >= patternLength - 1) {
         // Pattern complete
-        currentNoteIndex = currentPattern.length;
+        currentNoteIndex = patternLength;
         elements.checkNoteBtn.disabled = true;
         elements.nextNoteBtn.disabled = true;
         highlightNote(-1); // Clear highlight
         return;
     }
 
-    // Move to next note
+    // Move to next note/interval
     currentNoteIndex++;
     highlightNote(currentNoteIndex);
 }
