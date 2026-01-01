@@ -71,8 +71,8 @@
         <div class="mode-toggle">
             <button id="training-mode-btn" class="mode-btn active" data-mode="training">Training Mode</button>
             <button id="guessing-mode-btn" class="mode-btn" data-mode="guessing">Guessing Mode</button>
+            <button id="tuner-mode-btn" class="mode-btn" data-mode="tuner">Tuner</button>
         </div>
-
         <!-- Training Mode Container -->
         <main id="training-mode-container">
             <!-- Training Type Toggle -->
@@ -582,10 +582,80 @@
             </div>
 
         </div>
+
+        <!-- Tuner Mode Container (hidden by default) -->
+        <div id="tuner-mode-container" style="display: none;">
+            <section class="section">
+                <h2>Tuner</h2>
+
+                <!-- Listen Section -->
+                <div class="tuner-listen">
+                    <h3>Listen</h3>
+                    <p class="info-text">Sing or play a note to see what it is</p>
+
+                    <button id="tuner-listen-btn" class="btn btn-primary">
+                        🎤 Start Listening
+                    </button>
+
+                    <div id="tuner-display" class="tuner-display" style="display: none;">
+                        <div class="tuner-indicator">
+                            <div class="tuner-dot" id="tuner-dot"></div>
+                        </div>
+                        <div class="tuner-note-images" id="tuner-note-images">
+                            <span class="tuner-placeholder">--</span>
+                        </div>
+                        <div class="tuner-syllable" id="tuner-syllable">--</div>
+                        <div class="tuner-frequency" id="tuner-frequency">-- Hz</div>
+                        <div class="tuner-cents">
+                            <span id="tuner-cents-value">0 cents</span>
+                            <span id="tuner-arrow">•</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Play Section -->
+                <div class="tuner-play">
+                    <h3>Play</h3>
+                    <p class="info-text">Choose a note to hear</p>
+
+                    <div class="tuner-note-buttons">
+                        <button class="tuner-note-btn" data-note="1">
+                            <img src="assets/digit-1.png" alt="1" class="note-digit">
+                        </button>
+                        <button class="tuner-note-btn" data-note="2">
+                            <img src="assets/digit-2.png" alt="2" class="note-digit">
+                        </button>
+                        <button class="tuner-note-btn" data-note="3">
+                            <img src="assets/digit-3.png" alt="3" class="note-digit">
+                        </button>
+                        <button class="tuner-note-btn" data-note="4">
+                            <img src="assets/digit-4.png" alt="4" class="note-digit">
+                        </button>
+                        <button class="tuner-note-btn" data-note="5">
+                            <img src="assets/digit-5.png" alt="5" class="note-digit">
+                        </button>
+                        <button class="tuner-note-btn" data-note="6">
+                            <img src="assets/digit-6.png" alt="6" class="note-digit">
+                        </button>
+                        <button class="tuner-note-btn" data-note="7">
+                            <img src="assets/digit-7.png" alt="7" class="note-digit">
+                        </button>
+                    </div>
+
+                    <div class="tuner-octave-controls">
+                        <button id="tuner-octave-down" class="btn">Octave ▼</button>
+                        <span id="tuner-current-octave">Octave: 4</span>
+                        <button id="tuner-octave-up" class="btn">Octave ▲</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+
     </div>
 
     <script src="scales.js?v=1767163022"></script>
     <script src="audio-engine.js?v=1767163022"></script>
+    <script src="pitch-detection.js"></script>
     <script src="app.js?v=1767163022"></script>
 </body>
 </html>

@@ -412,6 +412,9 @@ function init() {
     setupGuessTypeToggle();
     setupGuessingModeListeners();
 
+    // Set up tuner mode
+    setupTunerMode();
+
     // Register service worker for PWA support
     // TEMPORARILY DISABLED FOR DEVELOPMENT
     if (false && 'serviceWorker' in navigator) {
@@ -2757,6 +2760,237 @@ function setupGuessingModeListeners() {
             guessInterval(interval);
         });
     });
+}
+
+// ===== TUNER MODE =====
+let tunerState = {
+    isListening: false,
+    audioContext: null,
+    analyser: null,
+    microphone: null,
+    buffer: null,
+    rafID: null,
+    currentOctave: 4
+};
+
+function setupTunerMode() {
+    // Mode toggle
+    const tunerModeBtn = document.getElementById('tuner-mode-btn');
+    if (!tunerModeBtn) return;
+
+    tunerModeBtn.addEventListener('click', () => {
+        showTunerMode();
+    });
+
+    // Listen button
+    const listenBtn = document.getElementById('tuner-listen-btn');
+    if (listenBtn) {
+        listenBtn.addEventListener('click', toggleTunerListening);
+    }
+
+    // Play note buttons
+    document.querySelectorAll('.tuner-note-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const note = parseInt(e.target.dataset.note);
+            playTunerNote(note);
+        });
+    });
+
+    // Octave controls
+    document.getElementById('tuner-octave-up').addEventListener('click', () => {
+        tunerState.currentOctave = Math.min(6, tunerState.currentOctave + 1);
+        updateOctaveDisplay();
+    });
+
+    document.getElementById('tuner-octave-down').addEventListener('click', () => {
+        tunerState.currentOctave = Math.max(2, tunerState.currentOctave - 1);
+        updateOctaveDisplay();
+    });
+}
+
+function showTunerMode() {
+    // Hide other modes
+    document.getElementById('training-mode-container').style.display = 'none';
+    document.getElementById('guessing-mode-container').style.display = 'none';
+    document.getElementById('tuner-mode-container').style.display = 'block';
+
+    // Update button states
+    document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('tuner-mode-btn').classList.add('active');
+}
+
+async function toggleTunerListening() {
+    if (tunerState.isListening) {
+        stopTunerListening();
+    } else {
+        await startTunerListening();
+    }
+}
+
+async function startTunerListening() {
+    const listenBtn = document.getElementById('tuner-listen-btn');
+    const tunerDisplay = document.getElementById('tuner-display');
+
+    try {
+        // Request microphone access
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: false
+            }
+        });
+
+        // Create audio context if needed
+        if (!tunerState.audioContext) {
+            tunerState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        tunerState.analyser = tunerState.audioContext.createAnalyser();
+        tunerState.microphone = tunerState.audioContext.createMediaStreamSource(stream);
+        tunerState.analyser.fftSize = 2048;
+        tunerState.microphone.connect(tunerState.analyser);
+        tunerState.buffer = new Float32Array(tunerState.analyser.fftSize);
+
+        tunerState.isListening = true;
+        listenBtn.textContent = '⏸ Stop Listening';
+        tunerDisplay.style.display = 'block';
+
+        // Start pitch detection loop
+        updateTunerPitch();
+
+    } catch (error) {
+        console.error('Microphone access denied:', error);
+        alert('Microphone access is required for the tuner. Please allow microphone permissions.');
+    }
+}
+
+function stopTunerListening() {
+    const listenBtn = document.getElementById('tuner-listen-btn');
+
+    if (tunerState.rafID) {
+        cancelAnimationFrame(tunerState.rafID);
+        tunerState.rafID = null;
+    }
+
+    if (tunerState.microphone) {
+        tunerState.microphone.disconnect();
+        tunerState.microphone = null;
+    }
+
+    if (tunerState.analyser) {
+        tunerState.analyser.disconnect();
+        tunerState.analyser = null;
+    }
+
+    tunerState.isListening = false;
+    listenBtn.textContent = '🎤 Start Listening';
+}
+
+function updateTunerPitch() {
+    if (!tunerState.isListening) return;
+
+    tunerState.analyser.getFloatTimeDomainData(tunerState.buffer);
+    const frequency = autoCorrelate(tunerState.buffer, tunerState.audioContext.sampleRate);
+
+    if (frequency > 0 && frequency < 2000) {
+        const midiNote = noteFromPitch(frequency);
+        const noteInfo = noteNameFromMIDI(midiNote);
+        const cents = centsOffFromPitch(frequency, midiNote);
+
+        // Build note display with images
+        const noteImagesContainer = document.getElementById('tuner-note-images');
+        noteImagesContainer.innerHTML = '';
+
+        // Add note letter image
+        const noteLetter = noteInfo.name.replace('#', '').replace('b', '');
+        const letterImg = document.createElement('img');
+        letterImg.src = `assets/note-${noteLetter}.png`;
+        letterImg.alt = noteLetter;
+        letterImg.className = 'note-letter';
+        noteImagesContainer.appendChild(letterImg);
+
+        // Add sharp or flat if present
+        if (noteInfo.name.includes('#')) {
+            const sharpImg = document.createElement('img');
+            sharpImg.src = 'assets/sharp.png';
+            sharpImg.alt = '#';
+            sharpImg.className = 'accidental';
+            noteImagesContainer.appendChild(sharpImg);
+        } else if (noteInfo.name.includes('b')) {
+            const flatImg = document.createElement('img');
+            flatImg.src = 'assets/flat.png';
+            flatImg.alt = 'b';
+            flatImg.className = 'accidental';
+            noteImagesContainer.appendChild(flatImg);
+        }
+
+        // Add octave number image
+        const octaveImg = document.createElement('img');
+        octaveImg.src = `assets/digit-${noteInfo.octave}.png`;
+        octaveImg.alt = noteInfo.octave;
+        octaveImg.className = 'octave-num';
+        noteImagesContainer.appendChild(octaveImg);
+
+        // Update frequency and cents
+        document.getElementById('tuner-frequency').textContent = frequency.toFixed(1) + ' Hz';
+        document.getElementById('tuner-cents-value').textContent =
+            (cents > 0 ? '+' : '') + cents + ' cents';
+
+        // Get solfege syllable
+        const scaleDegree = scaleDegreeFromNote(noteInfo.name);
+        const solfege = solfegeFromScaleDegree(scaleDegree);
+        document.getElementById('tuner-syllable').textContent =
+            solfege.western + ' / ' + solfege.indian;
+
+        // Arrow indicator
+        const arrow = cents > 5 ? '↑' : cents < -5 ? '↓' : '•';
+        document.getElementById('tuner-arrow').textContent = arrow;
+
+        // Color feedback on dot only
+        const tunerDot = document.getElementById('tuner-dot');
+        tunerDot.classList.remove('in-tune', 'close', 'off');
+        if (Math.abs(cents) < 10) {
+            tunerDot.classList.add('in-tune');
+        } else if (Math.abs(cents) < 25) {
+            tunerDot.classList.add('close');
+        } else {
+            tunerDot.classList.add('off');
+        }
+    } else {
+        // No pitch detected - show "--"
+        const noteImagesContainer = document.getElementById('tuner-note-images');
+        noteImagesContainer.innerHTML = '<span class="tuner-placeholder">--</span>';
+        document.getElementById('tuner-syllable').textContent = '--';
+        document.getElementById('tuner-frequency').textContent = '-- Hz';
+
+        // Reset dot color
+        const tunerDot = document.getElementById('tuner-dot');
+        tunerDot.classList.remove('in-tune', 'close', 'off');
+    }
+
+    // Continue loop
+    tunerState.rafID = requestAnimationFrame(updateTunerPitch);
+}
+
+function playTunerNote(noteNumber) {
+    // Calculate frequency for the note in the current octave
+    const scale = SCALE_LIBRARY['major'];
+    const baseFreq = BASE_FREQUENCY; // C4 = 261.63
+
+    // Adjust for octave (C4 is octave 4)
+    const octaveMultiplier = Math.pow(2, tunerState.currentOctave - 4);
+    const frequency = baseFreq * scale.ratios[noteNumber - 1] * octaveMultiplier;
+
+    // Play using audioEngine
+    if (audioEngine) {
+        audioEngine.playNote(frequency, 1.5);
+    }
+}
+
+function updateOctaveDisplay() {
+    document.getElementById('tuner-current-octave').textContent =
+        'Octave: ' + tunerState.currentOctave;
 }
 
 // ===== GLOBAL ERROR HANDLER (for debugging) =====

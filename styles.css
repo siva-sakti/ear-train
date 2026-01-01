@@ -1492,3 +1492,159 @@ body::after {
         max-width: fit-content;
     }
 }
+
+/* ========================================
+   TUNER STYLES
+   ======================================== */
+
+.tuner-listen {
+    margin-bottom: 32px;
+}
+
+.tuner-display {
+    background: var(--surface);
+    padding: 32px;
+    text-align: center;
+    margin: 24px 0;
+}
+
+.tuner-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.tuner-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #999;
+    transition: background-color 0.2s;
+}
+
+.tuner-dot.in-tune {
+    background: #4CAF50;
+    box-shadow: 0 0 12px rgba(76, 175, 80, 0.6);
+}
+
+.tuner-dot.close {
+    background: #FFC107;
+    box-shadow: 0 0 12px rgba(255, 193, 7, 0.6);
+}
+
+.tuner-dot.off {
+    background: #F44336;
+    box-shadow: 0 0 12px rgba(244, 67, 54, 0.6);
+}
+
+.tuner-note-images {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    min-height: 80px;
+}
+
+.tuner-note-images img {
+    height: 60px;
+    width: auto;
+}
+
+.tuner-note-images .note-letter {
+    height: 70px;
+}
+
+.tuner-note-images .accidental {
+    height: 50px;
+}
+
+.tuner-note-images .octave-num {
+    height: 50px;
+}
+
+.tuner-placeholder {
+    font-size: 4em;
+    font-weight: bold;
+    color: var(--text-subtle);
+}
+
+.tuner-syllable {
+    font-size: 1.5em;
+    color: var(--text-subtle);
+    margin-bottom: 16px;
+}
+
+.tuner-frequency {
+    font-size: 1.2em;
+    margin-bottom: 8px;
+}
+
+.tuner-cents {
+    font-size: 1.1em;
+}
+
+.tuner-arrow {
+    font-size: 1.5em;
+    margin-left: 8px;
+}
+
+.tuner-play {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+}
+
+.tuner-note-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 16px 0;
+}
+
+.tuner-note-btn {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    background: url('assets/note-circle-inactive.png') no-repeat center;
+    background-size: contain;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+    margin: 4px;
+}
+
+.tuner-note-btn .note-digit {
+    width: 35px;
+    height: auto;
+    pointer-events: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.tuner-note-btn:hover {
+    transform: scale(1.05);
+}
+
+.tuner-note-btn:active {
+    background-image: url('assets/note-circle-active.png');
+}
+
+.tuner-octave-controls {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+#tuner-current-octave {
+    font-size: 1.1em;
+    font-weight: 600;
+    min-width: 100px;
+    text-align: center;
+}
