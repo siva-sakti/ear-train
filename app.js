@@ -164,7 +164,8 @@ const elements = {
     // Pattern display
     patternDisplay: document.getElementById('pattern-display'),
     scaleInfo: document.getElementById('scale-info'),
-    scaleVisual: document.getElementById('scale-visual'),
+    noteScaleVisual: document.getElementById('note-scale-visual'),
+    intervalScaleVisual: document.getElementById('interval-scale-visual'),
     currentNote: document.getElementById('current-note'),
     intervalDisplay: document.getElementById('interval-display'),
 
@@ -395,8 +396,9 @@ function init() {
     // Set up event listeners
     setupEventListeners();
 
-    // Initialize scale visual
-    createScaleVisual();
+    // Initialize scale visuals for both training modes
+    createNoteScaleVisual();
+    createIntervalScaleVisual();
 
     // Load bookmarks
     loadBookmarks();
@@ -1256,27 +1258,44 @@ function handlePracticeModeChange(e) {
 }
 
 // ===== SCALE VISUAL =====
-function createScaleVisual() {
-    // Use the appropriate scale based on training type
-    const scale = currentTrainingType === 'interval' ? intervalScale : currentScale;
-    const scaleLength = getScaleLength(scale);
-    const scaleData = SCALE_LIBRARY[scale];
+function createNoteScaleVisual() {
+    const scaleLength = getScaleLength(currentScale);
 
-    elements.scaleVisual.innerHTML = '';
+    elements.noteScaleVisual.innerHTML = '';
 
     for (let i = 1; i <= scaleLength; i++) {
         const noteCircle = document.createElement('div');
         noteCircle.className = 'note-circle';
         noteCircle.dataset.note = i;
 
-        elements.scaleVisual.appendChild(noteCircle);
+        elements.noteScaleVisual.appendChild(noteCircle);
     }
 
-    // Always update visual to populate numbers/syllables, and apply pattern highlighting if exists
+    updateScaleVisual();
+}
+
+function createIntervalScaleVisual() {
+    const scaleLength = getScaleLength(intervalScale);
+
+    elements.intervalScaleVisual.innerHTML = '';
+
+    for (let i = 1; i <= scaleLength; i++) {
+        const noteCircle = document.createElement('div');
+        noteCircle.className = 'note-circle';
+        noteCircle.dataset.note = i;
+
+        elements.intervalScaleVisual.appendChild(noteCircle);
+    }
+
+    updateScaleVisualForIntervals();
+}
+
+function createScaleVisual() {
+    // Create the appropriate visual based on training type
     if (currentTrainingType === 'interval') {
-        updateScaleVisualForIntervals();
+        createIntervalScaleVisual();
     } else {
-        updateScaleVisual();
+        createNoteScaleVisual();
     }
 }
 
@@ -1285,13 +1304,13 @@ function updateScaleVisual() {
     const scale = SCALE_LIBRARY[currentScale];
 
     // Recreate if scale length changed
-    const currentCircles = elements.scaleVisual.querySelectorAll('.note-circle').length;
+    const currentCircles = elements.noteScaleVisual.querySelectorAll('.note-circle').length;
     if (currentCircles !== scaleLength) {
-        createScaleVisual();
+        createNoteScaleVisual();
         return;
     }
 
-    const circles = elements.scaleVisual.querySelectorAll('.note-circle');
+    const circles = elements.noteScaleVisual.querySelectorAll('.note-circle');
 
     circles.forEach((circle, idx) => {
         const noteNum = idx + 1;
@@ -1326,12 +1345,12 @@ function highlightNote(noteIndex) {
         return;
     }
 
-    const circles = elements.scaleVisual.querySelectorAll('.note-circle');
+    const circles = elements.noteScaleVisual.querySelectorAll('.note-circle');
     circles.forEach(circle => circle.classList.remove('active'));
 
     if (noteIndex >= 0 && noteIndex < currentPattern.length) {
         const note = currentPattern[noteIndex];
-        const circle = elements.scaleVisual.querySelector(`[data-note="${note}"]`);
+        const circle = elements.noteScaleVisual.querySelector(`[data-note="${note}"]`);
         if (circle) {
             circle.classList.add('active');
         }
@@ -1622,17 +1641,17 @@ async function playNextInterval() {
 
 function highlightSingleNote(noteNumber) {
     // Highlight only one note at a time (used for melodic playback)
-    const circles = elements.scaleVisual.querySelectorAll('.note-circle');
+    const circles = elements.intervalScaleVisual.querySelectorAll('.note-circle');
     circles.forEach(circle => {
         circle.classList.remove('active', 'interval-start', 'interval-end', 'octave-up');
     });
 
     // Map notes > 7 to 1-7 range (8→1, 9→2, etc.)
-    const scaleLength = getScaleLength(currentTrainingType === 'interval' ? intervalScale : currentScale);
+    const scaleLength = getScaleLength(intervalScale);
     const isOctaveUp = noteNumber > scaleLength;
     const displayNote = isOctaveUp ? ((noteNumber - 1) % scaleLength) + 1 : noteNumber;
 
-    const circle = elements.scaleVisual.querySelector(`[data-note="${displayNote}"]`);
+    const circle = elements.intervalScaleVisual.querySelector(`[data-note="${displayNote}"]`);
     if (circle) {
         circle.classList.add('active');
         if (isOctaveUp) {
@@ -1642,12 +1661,12 @@ function highlightSingleNote(noteNumber) {
 }
 
 function highlightInterval(intervalIndex) {
-    const circles = elements.scaleVisual.querySelectorAll('.note-circle');
+    const circles = elements.intervalScaleVisual.querySelectorAll('.note-circle');
     circles.forEach(circle => circle.classList.remove('active', 'interval-start', 'interval-end', 'octave-up'));
 
     if (intervalIndex >= 0 && intervalIndex < currentIntervalPattern.length) {
         const interval = currentIntervalPattern[intervalIndex];
-        const scaleLength = getScaleLength(currentTrainingType === 'interval' ? intervalScale : currentScale);
+        const scaleLength = getScaleLength(intervalScale);
 
         // In self-paced mode, only highlight the current note (start or end)
         // In listen mode, highlight both notes
@@ -1656,12 +1675,12 @@ function highlightInterval(intervalIndex) {
         // Highlight start note (map to 1-7 if needed)
         const isStartOctaveUp = interval.startNote > scaleLength;
         const displayStartNote = isStartOctaveUp ? ((interval.startNote - 1) % scaleLength) + 1 : interval.startNote;
-        const startCircle = elements.scaleVisual.querySelector(`[data-note="${displayStartNote}"]`);
+        const startCircle = elements.intervalScaleVisual.querySelector(`[data-note="${displayStartNote}"]`);
 
         // Highlight end note (map to 1-7 if needed)
         const isEndOctaveUp = interval.endNote > scaleLength;
         const displayEndNote = isEndOctaveUp ? ((interval.endNote - 1) % scaleLength) + 1 : interval.endNote;
-        const endCircle = elements.scaleVisual.querySelector(`[data-note="${displayEndNote}"]`);
+        const endCircle = elements.intervalScaleVisual.querySelector(`[data-note="${displayEndNote}"]`);
 
         if (isSelfPaced) {
             // Only highlight the current note being played
@@ -1952,13 +1971,13 @@ function updateScaleVisualForIntervals() {
     const scale = SCALE_LIBRARY[intervalScale];
 
     // Recreate if scale length changed
-    const currentCircles = elements.scaleVisual.querySelectorAll('.note-circle').length;
+    const currentCircles = elements.intervalScaleVisual.querySelectorAll('.note-circle').length;
     if (currentCircles !== scaleLength) {
-        createScaleVisual();
+        createIntervalScaleVisual();
         return;
     }
 
-    const circles = elements.scaleVisual.querySelectorAll('.note-circle');
+    const circles = elements.intervalScaleVisual.querySelectorAll('.note-circle');
 
     circles.forEach((circle, idx) => {
         const noteNum = idx + 1;
